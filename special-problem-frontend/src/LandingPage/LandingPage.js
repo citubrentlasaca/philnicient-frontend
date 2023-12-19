@@ -1,6 +1,15 @@
 import React from 'react'
 import LandingPageHeader from './LandingPageHeader'
 import colors from '../colors'
+import answerquestions from '../Images/answerquestions.png'
+import mark from '../Images/mark.png'
+import modal from '../Images/modal.png'
+import navigationbuttons from '../Images/navigationbuttons.png'
+import number from '../Images/number.png'
+import start from '../Images/start.png'
+import status from '../Images/status.png'
+import submit from '../Images/submit.png'
+import timeremaining from '../Images/timeremaining.png'
 
 function LandingPage() {
     return (
@@ -12,29 +21,6 @@ function LandingPage() {
                     overflowY: "auto",
                 }}
             >
-                <h1 className='w-50 mb-0 text-center'
-                    style={{
-                        fontFamily: "Montserrat Black",
-                        color: colors.dark,
-                    }}
-                >
-                    Welcome to PhilNITS Proficiency Assessment
-                </h1>
-                <p className='w-50 mb-0'
-                    style={{
-                        color: colors.dark,
-                        textAlign: "justify",
-                    }}
-                >
-                    PhilNITS Proficiency Assessment is a cutting-edge application designed to evaluate the proficiency level of users in the nine major categories of the PhilNITS FE Exam. Harnessing the power of artificial intelligence, this innovative tool goes beyond traditional assessments by not only gauging one's understanding but also identifying areas of misunderstanding. The application employs advanced algorithms to analyze user responses, providing a comprehensive overview of strengths and weaknesses. Through an intuitive interface, PhilNITS Proficiency Assessment delivers personalized insights, helping users to focus on specific topics that require attention and improvement. Whether preparing for the PhilNITS FE Exam or seeking to enhance one's knowledge in information technology and systems, this application offers a dynamic and efficient way to measure and refine proficiency across key subject areas.
-                </p>
-                <hr
-                    style={{
-                        width: "50%",
-                        height: "1px",
-                        color: colors.dark,
-                    }}
-                />
                 <h1 className='w-75 mb-0 text-center'
                     style={{
                         fontFamily: "Montserrat Black",
@@ -43,22 +29,105 @@ function LandingPage() {
                 >
                     Instructions
                 </h1>
-                <p className='w-50 mb-0'
-                    style={{
-                        color: colors.dark,
-                        textAlign: "justify",
-                    }}
-                >
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque in posuere augue. Nam id aliquam ligula. Donec eu vulputate leo. Vivamus velit magna, imperdiet eget convallis eget, lacinia sed arcu. Quisque ultricies a est et tempus. Donec malesuada, tellus a aliquet volutpat, neque massa venenatis metus, et suscipit erat nibh vestibulum velit. Nulla commodo efficitur odio, sed pretium turpis iaculis eget. Mauris imperdiet erat sit amet libero rhoncus, id molestie urna rutrum. Donec volutpat eros et orci hendrerit convallis. Fusce auctor ornare bibendum. Ut pulvinar metus vitae risus pellentesque sollicitudin. Ut eu ultrices ipsum, vel molestie ipsum.
-                </p>
-                <p className='w-50 mb-0'
-                    style={{
-                        color: colors.dark,
-                        textAlign: "justify",
-                    }}
-                >
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque in posuere augue. Nam id aliquam ligula. Donec eu vulputate leo. Vivamus velit magna, imperdiet eget convallis eget, lacinia sed arcu. Quisque ultricies a est et tempus. Donec malesuada, tellus a aliquet volutpat, neque massa venenatis metus, et suscipit erat nibh vestibulum velit. Nulla commodo efficitur odio, sed pretium turpis iaculis eget. Mauris imperdiet erat sit amet libero rhoncus, id molestie urna rutrum. Donec volutpat eros et orci hendrerit convallis. Fusce auctor ornare bibendum. Ut pulvinar metus vitae risus pellentesque sollicitudin. Ut eu ultrices ipsum, vel molestie ipsum.
-                </p>
+                <ol className='w-75' style={{ textAlign: "justify", color: colors.dark }}>
+                    <li>
+                        <strong>Initiating the Assessment:</strong>
+                        <ul>
+                            <li>Click on the "Start" button located on the right side of the header.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={start} />
+                            </div>
+                            <li>A dialog box will appear, prompting you to start the assessment. Choose "Yes" or "No" to proceed.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={modal} />
+                            </div>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Assessment Interface:</strong>
+                        <ul>
+                            <li>Once the assessment starts, note that you cannot exit fullscreen mode or refresh the page during the assessment.</li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Navigating and Answering Questions:</strong>
+                        <ul>
+                            <li>On the assessment page, find the time remaining on the right side of the header.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={timeremaining} />
+                            </div>
+                            <li>Use the navigation buttons on the left side to move between questions.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={navigationbuttons} />
+                            </div>
+                            <li>Answer questions on the right side of the page. Your current question number is displayed on the left side of the footer.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={answerquestions} />
+                            </div>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={number} />
+                            </div>
+                            <li>If you reach the last question, a "Submit" button will appear on the right side of the footer.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={submit} />
+                            </div>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Marking Questions for Review:</strong>
+                        <ul>
+                            <li>To mark a question for review, check the checkbox located above each question.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={mark} />
+                            </div>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Question Status Indicators:</strong>
+                        <ul>
+                            <li>Unanswered questions have white navigation buttons.</li>
+                            <li>Answered questions have green navigation buttons.</li>
+                            <li>Questions marked for review have red navigation buttons.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={status} />
+                            </div>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Exponent Symbol (^) Usage:</strong>
+                        <ul>
+                            <li>If you encounter the symbol "^" in questions or choices, it represents an exponent. For example, 2^2 means 2 to the power of 2.</li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Automatic Submission on Time Expiry:</strong>
+                        <ul>
+                            <li>If the time remaining runs out, the assessment will automatically submit.</li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Post-Assessment Actions:</strong>
+                        <ul>
+                            <li>After submission, view your overall score.</li>
+                            <li>Review the assessment and identify proficiency levels across nine major categories with AI assistance.</li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <strong>Restarting the Assessment:</strong>
+                        <ul>
+                            <li>If needed, restart the assessment by clicking the "Restart" button on the right side of the footer.</li>
+                        </ul>
+                    </li>
+                </ol>
+
             </div>
         </div>
     )
