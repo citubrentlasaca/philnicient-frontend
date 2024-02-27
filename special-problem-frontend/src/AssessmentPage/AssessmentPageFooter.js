@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
+import { useNavigate } from 'react-router-dom'
 
-function AssessmentPageFooter({ itemNumber, totalItems, questions }) {
+function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining }) {
     const [score, setScore] = useState(0);
     const [modelInputs, setModelInputs] = useState([])
+    const navigate = useNavigate()
 
     const handleSubmit = () => {
         questions.forEach((question) => {
@@ -56,7 +58,15 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions }) {
         });
 
         setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
+        console.log(modelInputsData);
+        navigate('/results');
     };
+
+    useEffect(() => {
+        if (timeRemaining.hours === 0 && timeRemaining.minutes === 0 && timeRemaining.seconds === 0) {
+            handleSubmit();
+        }
+    }, [timeRemaining]);
 
     return (
         <div className='w-100 p-4 d-flex flex-row justify-content-between align-items-center'

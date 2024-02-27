@@ -1,8 +1,9 @@
 import React from 'react'
-import LandingPageHeader from './LandingPageHeader'
+import LandingPageHeader from './InstructionsPageHeader'
 import colors from '../colors'
 import answerquestions from '../Images/answerquestions.png'
 import mark from '../Images/mark.png'
+import scale from '../Images/scale.png'
 import modal from '../Images/modal.png'
 import navigationbuttons from '../Images/navigationbuttons.png'
 import number from '../Images/number.png'
@@ -75,6 +76,21 @@ function LandingPage() {
                             </div>
                         </ul>
                     </li>
+                    <li>
+                        <strong>Certainty of Response Index Scale:</strong>
+                        <ul>
+                            <li>Below each question, you have to adjust the scale according to how certain you are of your answer.</li>
+                            <div className='w-100 d-flex justify-content-center align-items-center'>
+                                <img className='img-fluid rounded' src={scale} />
+                            </div>
+                            <li>0 - Totally Guessed Answer</li>
+                            <li>1 - Almost Guess</li>
+                            <li>2 - Not Sure</li>
+                            <li>3 - Sure</li>
+                            <li>4 - Almost Certain</li>
+                            <li>5 - Certain</li>
+                        </ul>
+                    </li>
 
                     <li>
                         <strong>Marking Questions for Review:</strong>
@@ -117,13 +133,6 @@ function LandingPage() {
                         <ul>
                             <li>After submission, view your overall score.</li>
                             <li>Review the assessment and identify proficiency levels across nine major categories with AI assistance.</li>
-                        </ul>
-                    </li>
-
-                    <li>
-                        <strong>Restarting the Assessment:</strong>
-                        <ul>
-                            <li>If needed, restart the assessment by clicking the "Restart" button on the right side of the footer.</li>
                         </ul>
                     </li>
                 </ol>

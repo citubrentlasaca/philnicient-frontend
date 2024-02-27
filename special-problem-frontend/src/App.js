@@ -1,8 +1,12 @@
 import './App.css';
 import AssessmentPage from './AssessmentPage/AssessmentPage.js';
 import colors from './colors';
-import LandingPage from './LandingPage/LandingPage.js';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import InstructionsPage from './InstructionsPage/InstructionsPage.js';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ResultsPage from './ResultsPage/ResultsPage.js';
+import LoginPage from './LoginPage/LoginPage.js';
+import SignUpPage from './SignUpPage/SignUpPage.js';
+import Homepage from './Homepage/Homepage.js';
 
 function App() {
   return (
@@ -13,8 +17,12 @@ function App() {
     >
       <Router>
         <Routes>
-          <Route index element={<LandingPage />} />
+          <Route path='/' element={<LoginPage />} />
+          <Route path='/register' element={<SignUpPage />} />
+          <Route path='/home' element={<Homepage />} />
+          <Route path='/instructions' element={<InstructionsPage />} />
           <Route path="/assessment" element={<AssessmentPage />} />
+          <Route path="/results" element={<ResultsPage />} />
         </Routes>
       </Router>
     </div>

@@ -22,6 +22,7 @@ function AssessmentPage() {
     const [questions, setQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [certaintyIndex, setCertaintyIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     const getCertaintyLabel = (userCRI) => {
         if (userCRI === 0) {
@@ -75,15 +76,15 @@ function AssessmentPage() {
                     }));
                 };
 
-                const basictheory = await fetchDocuments("Technology", "Basic Theory", 9);
-                const computersystems = await fetchDocuments("Technology", "Computer Systems", 15);
-                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 21);
-                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 5);
-                const projectmanagement = await fetchDocuments("Management", "Project Management", 4);
-                const servicemanagement = await fetchDocuments("Management", "Service Management", 6);
-                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 5);
-                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 9);
-                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 6);
+                const basictheory = await fetchDocuments("Technology", "Basic Theory", 1);
+                const computersystems = await fetchDocuments("Technology", "Computer Systems", 1);
+                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 1);
+                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 1);
+                const projectmanagement = await fetchDocuments("Management", "Project Management", 1);
+                const servicemanagement = await fetchDocuments("Management", "Service Management", 1);
+                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 1);
+                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 1);
+                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 1);
 
                 const allDocuments = [
                     ...basictheory,
@@ -110,6 +111,7 @@ function AssessmentPage() {
 
                     setSelectedQuestion(firstQuestion);
                 }
+                setLoading(false);
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -236,120 +238,132 @@ function AssessmentPage() {
     }, [selectedQuestion]);
 
     return (
-        selectedQuestion && (
-            <AssessmentPageLayout itemNumber={selectedQuestion.itemNumber} totalItems={questions.length} questions={questions}>
-                <div className='w-100 h-100 d-flex flex-row justify-content-start align-items-start'>
-                    <div className='w-25 h-100 p-4'
-                        style={{
-                            backgroundColor: colors.dark,
-                            overflowY: "auto",
-                        }}
-                    >
-                        <div className="w-100">
-                            <div className="row row-cols-lg-5 row-cols-md-3 row-cols-sm-2 row-cols-1 row-gap-3">
-                                {questions.map((question, index) => (
-                                    <div className="col d-flex justify-content-center align-items-center" key={index}
-                                        style={{
-                                            height: "50px",
-                                        }}
-                                    >
-                                        <div className='h-100 d-flex flex-column justify-content-center align-items-center rounded' onClick={() => handleQuestionClick(question, index)}
+        loading ? (
+            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                <div className="spinner-border" role="status"
+                    style={{
+                        color: colors.accent
+                    }}
+                >
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        ) :
+            (selectedQuestion && (
+                <AssessmentPageLayout itemNumber={selectedQuestion.itemNumber} totalItems={questions.length} questions={questions}>
+                    <div className='w-100 h-100 d-flex flex-row justify-content-start align-items-start'>
+                        <div className='w-25 h-100 p-4'
+                            style={{
+                                backgroundColor: colors.dark,
+                                overflowY: "auto",
+                            }}
+                        >
+                            <div className="w-100">
+                                <div className="row row-cols-lg-5 row-cols-md-3 row-cols-sm-2 row-cols-1 row-gap-3">
+                                    {questions.map((question, index) => (
+                                        <div className="col d-flex justify-content-center align-items-center" key={index}
                                             style={{
-                                                width: "50px",
-                                                cursor: "pointer",
-                                                backgroundColor:
-                                                    question.isForReview
-                                                        ? colors.wrong
-                                                        : question.userAnswer === null
-                                                            ? colors.light
-                                                            : colors.correct,
+                                                height: "50px",
                                             }}
                                         >
-                                            <b style={{ color: colors.dark }}>{index + 1}</b>
+                                            <div className='h-100 d-flex flex-column justify-content-center align-items-center rounded' onClick={() => handleQuestionClick(question, index)}
+                                                style={{
+                                                    width: "50px",
+                                                    cursor: "pointer",
+                                                    backgroundColor:
+                                                        question.isForReview
+                                                            ? colors.wrong
+                                                            : question.userAnswer === null
+                                                                ? colors.light
+                                                                : colors.correct,
+                                                }}
+                                            >
+                                                <b style={{ color: colors.dark }}>{index + 1}</b>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className='w-75 h-100 p-4'
-                        style={{
-                            backgroundColor: colors.light,
-                            overflowY: "auto",
-                        }}
-                    >
-                        <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-start gap-2'>
-                            <div className="form-check">
-                                <input className="form-check-input" type="checkbox" id="flexCheckDefault" checked={selectedQuestion.isForReview} onChange={handleCheckboxChange} />
-                                <label className="form-check-label" htmlFor="flexCheckDefault">
-                                    Mark as For Review
-                                </label>
-                            </div>
-                            <p className='mb-0'>
-                                {selectedQuestion && selectedQuestion.question}
-                            </p>
-                            {selectedQuestion && selectedQuestion.figure && (
-                                <div className='w-100 d-flex justify-content-center align-items-center'>
+                        <div className='w-75 h-100 p-4'
+                            style={{
+                                backgroundColor: colors.light,
+                                overflowY: "auto",
+                            }}
+                        >
+                            <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-start gap-2'>
+                                <div className="form-check">
+                                    <input className="form-check-input" type="checkbox" id="flexCheckDefault" checked={selectedQuestion.isForReview} onChange={handleCheckboxChange} />
+                                    <label className="form-check-label" htmlFor="flexCheckDefault">
+                                        Mark as For Review
+                                    </label>
+                                </div>
+                                <p className='mb-0'>
+                                    {selectedQuestion && selectedQuestion.question}
+                                </p>
+                                {selectedQuestion && selectedQuestion.figure && (
+                                    <div className='w-100 d-flex justify-content-center align-items-center'>
 
-                                    <img src={selectedQuestion.figure} alt="Figure" className='img-fluid' />
+                                        <img src={selectedQuestion.figure} alt="Figure" className='img-fluid' />
+
+                                    </div>
+                                )}
+                                {selectedQuestion && selectedQuestion.choices.map((choice, index) => {
+                                    const radioButtonId = `flexRadioDefault${index + 1}`;
+                                    const isUserAnswer = selectedQuestion.userAnswer === choice;
+
+                                    return (
+                                        <div key={index} className="form-check mb-0 d-table">
+                                            <input
+                                                className="form-check-input"
+                                                type="radio"
+                                                id={radioButtonId}
+                                                onChange={handleRadioChange}
+                                                name="answer"
+                                                checked={isUserAnswer}
+                                                value={choice}
+                                            />
+                                            {choice.startsWith('https://') ? (
+                                                <img src={choice} alt={`Choice ${index + 1}`}
+                                                    style={{
+                                                        maxWidth: "50%",
+                                                        height: "auto",
+                                                    }}
+                                                />
+                                            ) : (
+                                                <label className="form-check-label" htmlFor={radioButtonId}>
+                                                    {choice}
+                                                </label>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                <div className='w-100 p-4'
+                                    style={{
+                                        backgroundColor: colors.dark,
+                                        borderRadius: "10px",
+                                    }}
+                                >
+                                    <label htmlFor="customRange3" className="form-label w-100 text-center" style={{ color: colors.light }}>{getCertaintyLabel(selectedQuestion.userCRI)}</label>
+                                    <input
+                                        type="range"
+                                        className="form-range"
+                                        min="0"
+                                        max="5"
+                                        step="1"
+                                        id="customRange3"
+                                        value={selectedQuestion.userCRI}
+                                        onChange={handleCertaintyChange}
+                                    />
 
                                 </div>
-                            )}
-                            {selectedQuestion && selectedQuestion.choices.map((choice, index) => {
-                                const radioButtonId = `flexRadioDefault${index + 1}`;
-                                const isUserAnswer = selectedQuestion.userAnswer === choice;
-
-                                return (
-                                    <div key={index} className="form-check mb-0 d-table">
-                                        <input
-                                            className="form-check-input"
-                                            type="radio"
-                                            id={radioButtonId}
-                                            onChange={handleRadioChange}
-                                            name="answer"
-                                            checked={isUserAnswer}
-                                            value={choice}
-                                        />
-                                        {choice.startsWith('https://') ? (
-                                            <img src={choice} alt={`Choice ${index + 1}`}
-                                                style={{
-                                                    maxWidth: "50%",
-                                                    height: "auto",
-                                                }}
-                                            />
-                                        ) : (
-                                            <label className="form-check-label" htmlFor={radioButtonId}>
-                                                {choice}
-                                            </label>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                            <div className='w-100 p-4'
-                                style={{
-                                    backgroundColor: colors.dark,
-                                    borderRadius: "10px",
-                                }}
-                            >
-                                <label htmlFor="customRange3" className="form-label w-100 text-center" style={{ color: colors.light }}>{getCertaintyLabel(selectedQuestion.userCRI)}</label>
-                                <input
-                                    type="range"
-                                    className="form-range"
-                                    min="0"
-                                    max="5"
-                                    step="1"
-                                    id="customRange3"
-                                    value={selectedQuestion.userCRI}
-                                    onChange={handleCertaintyChange}
-                                />
-
+                                <div className='w-100' style={{ minHeight: '24px' }} />
                             </div>
-                            <div className='w-100' style={{ minHeight: '24px' }} />
                         </div>
                     </div>
-                </div>
-            </AssessmentPageLayout>
-        )
+                </AssessmentPageLayout>
+            )
+            )
     )
 }
 
