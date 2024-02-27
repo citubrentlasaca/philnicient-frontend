@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios';
 
 function SignUpPage() {
@@ -13,6 +13,7 @@ function SignUpPage() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [usernameError, setUsernameError] = useState(false);
+    const navigate = useNavigate();
 
     const handleFirstNameChange = (event) => {
         setFirstName(event.target.value);
@@ -50,6 +51,7 @@ function SignUpPage() {
         })
             .then(response => {
                 console.log('User created:', response.data);
+                navigate('/login');
             })
             .catch(error => {
                 console.error('Error creating user:', error);

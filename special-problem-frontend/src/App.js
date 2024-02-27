@@ -2,7 +2,7 @@ import './App.css';
 import AssessmentPage from './AssessmentPage/AssessmentPage.js';
 import colors from './colors';
 import InstructionsPage from './InstructionsPage/InstructionsPage.js';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ResultsPage from './ResultsPage/ResultsPage.js';
 import LoginPage from './LoginPage/LoginPage.js';
 import SignUpPage from './SignUpPage/SignUpPage.js';
@@ -17,12 +17,12 @@ function App() {
     >
       <Router>
         <Routes>
-          <Route path='/' element={<LoginPage />} />
+          <Route path='/login' element={<LoginPage />} />
           <Route path='/register' element={<SignUpPage />} />
-          <Route path='/home' element={<Homepage />} />
-          <Route path='/instructions' element={<InstructionsPage />} />
-          <Route path="/assessment" element={<AssessmentPage />} />
-          <Route path="/results" element={<ResultsPage />} />
+          <Route path='/' element={<PrivateRoute redirectTo="/login" component={Homepage} />} />
+          <Route path='/instructions' element={<PrivateRoute redirectTo="/login" component={InstructionsPage} />} />
+          <Route path="/assessment" element={<PrivateRoute redirectTo="/login" component={AssessmentPage} />} />
+          <Route path="/results" element={<PrivateRoute redirectTo="/login" component={ResultsPage} />} />
         </Routes>
       </Router>
     </div>
@@ -30,3 +30,8 @@ function App() {
 }
 
 export default App;
+
+const PrivateRoute = ({ component: Component, redirectTo }) => {
+  const token = localStorage.getItem('token');
+  return token ? <Component /> : <Navigate to={redirectTo} />;
+};
