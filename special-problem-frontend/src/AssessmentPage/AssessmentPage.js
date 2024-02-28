@@ -1,22 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import AssessmentPageHeader from './AssessmentPageHeader'
 import colors from '../colors';
-
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 import { getDocs, collection, query, where } from "firebase/firestore";
 import AssessmentPageLayout from './AssessmentPageLayout';
-const firebaseConfig = {
-    apiKey: "AIzaSyBYslsNBGdOWBWDTKQDYqfmfxlF2wWm6aY",
-    authDomain: "philnits-recommendation-system.firebaseapp.com",
-    projectId: "philnits-recommendation-system",
-    storageBucket: "philnits-recommendation-system.appspot.com",
-    messagingSenderId: "179273781052",
-    appId: "1:179273781052:web:37bec31b5751d7a8bd5839",
-    measurementId: "G-ZJC36WWJWH"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { firestore } from '../firebaseConfig.js';
 
 function AssessmentPage() {
     const [questions, setQuestions] = useState([]);
@@ -49,7 +35,7 @@ function AssessmentPage() {
         const fetchData = async () => {
             try {
                 const fetchDocuments = async (collectionName, tag, count) => {
-                    const q = query(collection(db, collectionName), where("tag", "==", tag));
+                    const q = query(collection(firestore, collectionName), where("tag", "==", tag));
                     const querySnapshot = await getDocs(q);
                     const documents = querySnapshot.docs.map((doc) => {
                         return {

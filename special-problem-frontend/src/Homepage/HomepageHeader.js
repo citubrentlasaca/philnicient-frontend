@@ -7,7 +7,7 @@ function HomepageHeader() {
     const navigate = useNavigate();
 
     const handleLogoutClick = () => {
-        localStorage.clear();
+        sessionStorage.clear();
         navigate('/login');
     }
 

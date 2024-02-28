@@ -32,6 +32,8 @@ function App() {
 export default App;
 
 const PrivateRoute = ({ component: Component, redirectTo }) => {
-  const token = localStorage.getItem('token');
+  const userDataString = sessionStorage.getItem('userData');
+  const userData = JSON.parse(userDataString);
+  const token = userData?.access_token;
   return token ? <Component /> : <Navigate to={redirectTo} />;
 };

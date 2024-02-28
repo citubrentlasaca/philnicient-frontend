@@ -8,6 +8,7 @@ function LoginPage() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState(false)
     const navigate = useNavigate();
 
     const handleUsernameChange = (e) => {
@@ -28,12 +29,14 @@ function LoginPage() {
             password: password,
         })
             .then(response => {
-                console.log('User successfully logged in:', response.data);
-                localStorage.setItem('token', response.data.access_token);
+                const userData = response.data;
+                console.log('User successfully logged in:', userData);
+                sessionStorage.setItem('userData', JSON.stringify(userData))
                 navigate('/');
             })
             .catch(error => {
                 console.error('Error logging in user:', error);
+                setError(true);
             });
     }
 
@@ -91,6 +94,9 @@ function LoginPage() {
                     >
                         Login
                     </button>
+                    {error && (
+                        <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>User does not exist.</p>
+                    )}
                 </div>
                 <p>Don't have an account yet? Sign up <Link to="/register" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
             </div>
