@@ -1,110 +1,91 @@
 import React, { useEffect, useState } from 'react'
 import colors from '../colors';
-import { getDocs, collection, query, where } from "firebase/firestore";
 import AssessmentPageLayout from './AssessmentPageLayout';
-import { firestore } from '../firebaseConfig.js';
+import { useLocation, useParams } from 'react-router-dom';
+import axios from 'axios';
 
 function AssessmentPage() {
-    const [questions, setQuestions] = useState([]);
-    const [selectedQuestion, setSelectedQuestion] = useState(null);
+    const location = useLocation();
+    const { tempQuestions, tempSelectedQuestion } = location.state || {};
+    const [questions, setQuestions] = useState(tempQuestions);
+    const [selectedQuestion, setSelectedQuestion] = useState(tempSelectedQuestion);
     const [certaintyIndex, setCertaintyIndex] = useState(0);
     const [loading, setLoading] = useState(true);
+    const { assessmentId } = useParams();
 
-    const getCertaintyLabel = (userCRI) => {
-        if (userCRI === 0) {
+    useEffect(() => {
+        if (questions && selectedQuestion) {
+            setLoading(false);
+        } else {
+            axios.get(`http://127.0.0.1:5000/api/assessments/${assessmentId}`)
+                .then(response => {
+                    const questionsArray = response.data.questions;
+                    const promises = questionsArray.map(assessment =>
+                        axios.get(`http://127.0.0.1:5000/api/questions/${assessment}`)
+                    );
+
+                    Promise.all(promises)
+                        .then(responses => {
+                            const formattedQuestions = responses.map(response => {
+                                const {
+                                    question,
+                                    figure,
+                                    choices,
+                                    answer,
+                                    major_category: majorCategory,
+                                    student_answer: studentAnswer,
+                                    student_cri: studentCRI,
+                                    is_for_review: isForReview,
+                                    time
+                                } = response.data;
+
+                                return {
+                                    question,
+                                    figure,
+                                    choices,
+                                    answer,
+                                    majorCategory,
+                                    studentAnswer,
+                                    studentCRI,
+                                    isForReview,
+                                    time
+                                };
+                            });
+
+                            setQuestions(formattedQuestions);
+                            setSelectedQuestion(formattedQuestions[0]);
+                            setLoading(false);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching assessments:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error fetching student assessments:', error);
+                });
+        }
+    }, []);
+
+    const getCertaintyLabel = (studentCRI) => {
+        if (studentCRI === 0) {
             return "Certainty of Response Index: Totally Guessed Answer";
         }
-        else if (userCRI === 1) {
+        else if (studentCRI === 1) {
             return "Certainty of Response Index: Almost Guess";
         }
-        else if (userCRI === 2) {
+        else if (studentCRI === 2) {
             return "Certainty of Response Index: Not Sure";
         }
-        else if (userCRI === 3) {
+        else if (studentCRI === 3) {
             return "Certainty of Response Index: Sure";
         }
-        else if (userCRI === 4) {
+        else if (studentCRI === 4) {
             return "Certainty of Response Index: Almost Certain";
         }
-        else if (userCRI === 5) {
+        else if (studentCRI === 5) {
             return "Certainty of Response Index: Certain";
         }
     }
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const fetchDocuments = async (collectionName, tag, count) => {
-                    const q = query(collection(firestore, collectionName), where("tag", "==", tag));
-                    const querySnapshot = await getDocs(q);
-                    const documents = querySnapshot.docs.map((doc) => {
-                        return {
-                            id: doc.id,
-                            ...doc.data(),
-                            userAnswer: null,
-                            userCRI: 0,
-                            isForReview: false,
-                            time: 0,
-                        };
-                    });
-
-                    const shuffledDocuments = documents.sort(() => Math.random() - 0.5);
-                    return shuffledDocuments.slice(0, count).map(({ question, figure, choices, answer, tag, userAnswer, userCRI, isForReview, time }) => ({
-                        question,
-                        figure,
-                        choices,
-                        answer,
-                        tag,
-                        userAnswer,
-                        userCRI,
-                        isForReview,
-                        time,
-                    }));
-                };
-
-                const basictheory = await fetchDocuments("Technology", "Basic Theory", 1);
-                const computersystems = await fetchDocuments("Technology", "Computer Systems", 1);
-                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 1);
-                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 1);
-                const projectmanagement = await fetchDocuments("Management", "Project Management", 1);
-                const servicemanagement = await fetchDocuments("Management", "Service Management", 1);
-                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 1);
-                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 1);
-                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 1);
-
-                const allDocuments = [
-                    ...basictheory,
-                    ...computersystems,
-                    ...technicalelements,
-                    ...developmenttechniques,
-                    ...projectmanagement,
-                    ...servicemanagement,
-                    ...systemstrategy,
-                    ...managementstrategy,
-                    ...corporate,
-                ];
-
-                setQuestions(allDocuments);
-                if (allDocuments.length > 0) {
-                    const firstQuestion = {
-                        ...allDocuments[0],
-                        itemNumber: 1,
-                        userAnswer: null,
-                        userCRI: 0,
-                        isForReview: false,
-                        time: 0,
-                    };
-
-                    setSelectedQuestion(firstQuestion);
-                }
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
-
-        fetchData();
-    }, []);
 
     const handleQuestionClick = (question, index) => {
         setSelectedQuestion({
@@ -112,10 +93,10 @@ function AssessmentPage() {
             figure: question.figure,
             choices: question.choices,
             answer: question.answer,
-            tag: question.tag,
+            majorCategory: question.majorCategory,
             itemNumber: index + 1,
-            userAnswer: question.userAnswer,
-            userCRI: question.userCRI,
+            studentAnswer: question.studentAnswer,
+            studentCRI: question.studentCRI,
             isForReview: question.isForReview,
             time: question.time,
         });
@@ -133,14 +114,14 @@ function AssessmentPage() {
             ));
 
             if (selectedQuestionIndex !== -1) {
-                updatedQuestions[selectedQuestionIndex].userAnswer = selectedChoice;
+                updatedQuestions[selectedQuestionIndex].studentAnswer = selectedChoice;
             }
             return updatedQuestions;
         });
 
         setSelectedQuestion((prevQuestion) => ({
             ...prevQuestion,
-            userAnswer: selectedChoice,
+            studentAnswer: selectedChoice,
         }));
     };
 
@@ -176,14 +157,14 @@ function AssessmentPage() {
             ));
 
             if (selectedQuestionIndex !== -1) {
-                updatedQuestions[selectedQuestionIndex].userCRI = newCertaintyIndex;
+                updatedQuestions[selectedQuestionIndex].studentCRI = newCertaintyIndex;
             }
             return updatedQuestions;
         });
 
         setSelectedQuestion((prevQuestion) => ({
             ...prevQuestion,
-            userCRI: newCertaintyIndex,
+            studentCRI: newCertaintyIndex,
         }));
 
         setCertaintyIndex(newCertaintyIndex);
@@ -236,7 +217,7 @@ function AssessmentPage() {
             </div>
         ) :
             (selectedQuestion && (
-                <AssessmentPageLayout itemNumber={selectedQuestion.itemNumber} totalItems={questions.length} questions={questions}>
+                <AssessmentPageLayout itemNumber={selectedQuestion.itemNumber} totalItems={questions.length} questions={questions} studentAssessmentId={assessmentId}>
                     <div className='w-100 h-100 d-flex flex-row justify-content-start align-items-start'>
                         <div className='w-25 h-100 p-4'
                             style={{
@@ -259,7 +240,7 @@ function AssessmentPage() {
                                                     backgroundColor:
                                                         question.isForReview
                                                             ? colors.wrong
-                                                            : question.userAnswer === null
+                                                            : question.studentAnswer === null
                                                                 ? colors.light
                                                                 : colors.correct,
                                                 }}
@@ -296,7 +277,7 @@ function AssessmentPage() {
                                 )}
                                 {selectedQuestion && selectedQuestion.choices.map((choice, index) => {
                                     const radioButtonId = `flexRadioDefault${index + 1}`;
-                                    const isUserAnswer = selectedQuestion.userAnswer === choice;
+                                    const isUserAnswer = selectedQuestion.studentAnswer === choice;
 
                                     return (
                                         <div key={index} className="form-check mb-0 d-table">
@@ -330,7 +311,7 @@ function AssessmentPage() {
                                         borderRadius: "10px",
                                     }}
                                 >
-                                    <label htmlFor="customRange3" className="form-label w-100 text-center" style={{ color: colors.light }}>{getCertaintyLabel(selectedQuestion.userCRI)}</label>
+                                    <label htmlFor="customRange3" className="form-label w-100 text-center" style={{ color: colors.light }}>{getCertaintyLabel(selectedQuestion.studentCRI)}</label>
                                     <input
                                         type="range"
                                         className="form-range"
@@ -338,7 +319,7 @@ function AssessmentPage() {
                                         max="5"
                                         step="1"
                                         id="customRange3"
-                                        value={selectedQuestion.userCRI}
+                                        value={selectedQuestion.studentCRI}
                                         onChange={handleCertaintyChange}
                                     />
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
@@ -25,7 +25,7 @@ function LoginPage() {
 
     const handleLogInClick = (e) => {
         axios.post('http://127.0.0.1:5000/api/users/login', {
-            username: username,
+            username_or_email: username,
             password: password,
         })
             .then(response => {
@@ -39,6 +39,13 @@ function LoginPage() {
                 setError(true);
             });
     }
+
+    useEffect(() => {
+        const modalBackdrop = document.querySelector('.modal-backdrop.fade.show');
+        if (modalBackdrop) {
+            modalBackdrop.parentNode.removeChild(modalBackdrop);
+        }
+    }, []);
 
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-center align-items-center gap-4'
@@ -60,7 +67,7 @@ function LoginPage() {
                 <b>Login To Your Account</b>
                 <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
                     <div className="w-100">
-                        <label htmlFor="UsernameInput" className="form-label">Username</label>
+                        <label htmlFor="UsernameInput" className="form-label">Email Address/Username</label>
                         <input type="text" className="form-control" id="UsernameInput" onChange={handleUsernameChange} />
                     </div>
                     <div className="w-100">
@@ -98,7 +105,10 @@ function LoginPage() {
                         <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>User does not exist.</p>
                     )}
                 </div>
-                <p>Don't have an account yet? Sign up <Link to="/register" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
+                <p className='mb-0'>Don't have an account yet? Sign up <Link to="/signup" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
+                <Link to="/forgotpassword" style={{ textDecoration: "none" }}>
+                    <p className='mb-0' style={{ color: colors.accent }}>Forgot password?</p>
+                </Link>
             </div>
         </div>
     )

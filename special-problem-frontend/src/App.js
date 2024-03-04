@@ -7,6 +7,8 @@ import ResultsPage from './ResultsPage/ResultsPage.js';
 import LoginPage from './LoginPage/LoginPage.js';
 import SignUpPage from './SignUpPage/SignUpPage.js';
 import Homepage from './Homepage/Homepage.js';
+import ClassPage from './ClassPage/ClassPage.js';
+import ForgotPasswordPage from './LoginPage/ForgotPasswordPage.js';
 
 function App() {
   return (
@@ -18,10 +20,12 @@ function App() {
       <Router>
         <Routes>
           <Route path='/login' element={<LoginPage />} />
-          <Route path='/register' element={<SignUpPage />} />
+          <Route path='/signup' element={<SignUpPage />} />
+          <Route path='/forgotpassword' element={<ForgotPasswordPage />} />
           <Route path='/' element={<PrivateRoute redirectTo="/login" component={Homepage} />} />
+          <Route path='/class/:classId' element={<PrivateRoute redirectTo="/login" component={ClassPage} />} />
           <Route path='/instructions' element={<PrivateRoute redirectTo="/login" component={InstructionsPage} />} />
-          <Route path="/assessment" element={<PrivateRoute redirectTo="/login" component={AssessmentPage} />} />
+          <Route path="/assessment/:assessmentId" element={<PrivateRoute redirectTo="/login" component={AssessmentPage} />} />
           <Route path="/results" element={<PrivateRoute redirectTo="/login" component={ResultsPage} />} />
         </Routes>
       </Router>

@@ -10,7 +10,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
 
     const handleSubmit = () => {
         questions.forEach((question) => {
-            if (question.answer === question.userAnswer) {
+            if (question.answer === question.studentAnswer) {
                 setScore((prevScore) => prevScore + 1);
             }
         });
@@ -29,8 +29,8 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
 
         let modelInputsData = [];
 
-        tagsToHandle.forEach((tag) => {
-            const filteredQuestions = questions.filter((question) => question.tag === tag);
+        tagsToHandle.forEach((majorCategory) => {
+            const filteredQuestions = questions.filter((question) => question.majorCategory === majorCategory);
             const numberOfItems = filteredQuestions.length;
 
             let tagScore = 0;
@@ -38,18 +38,18 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
             let totalCRI = 0;
 
             filteredQuestions.forEach((question) => {
-                if (question.answer === question.userAnswer) {
+                if (question.answer === question.studentAnswer) {
                     tagScore += 1;
                 }
 
                 totalTimeTaken += question.time;
-                totalCRI += question.userCRI;
+                totalCRI += question.studentCRI;
             });
 
             const averageCRI = numberOfItems > 0 ? totalCRI / numberOfItems : 0;
 
             modelInputsData.push({
-                majorCategory: tag,
+                majorCategory: majorCategory,
                 numberOfItems,
                 score: tagScore,
                 totalTimeTaken,
@@ -58,7 +58,6 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
         });
 
         setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
-        console.log(modelInputsData);
         navigate('/results');
     };
 

@@ -4,7 +4,7 @@ import colors from '../colors'
 import axios from 'axios';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { firestore2 } from '../firebaseConfig.js';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Homepage() {
     const [loading, setLoading] = useState(true)
@@ -195,21 +195,28 @@ function Homepage() {
                             <div className="row row-cols-md-4 row-cols-sm-2 row-cols-1 row-gap-1">
                                 {classes.map((classData, index) => {
                                     return (
-                                        <div className="col" key={index}
+                                        <Link className="p-0" to={`/class/${classData.id}`} key={index}
                                             style={{
-                                                height: "250px",
-                                                padding: "10px"
+                                                textDecoration: "none",
+                                                color: colors.dark
                                             }}
                                         >
-                                            <div className='h-100 d-flex flex-column justify-content-center align-items-center rounded'
+                                            <div className="col"
                                                 style={{
-                                                    border: `3px solid ${colors.dark}`,
-                                                    cursor: "pointer",
+                                                    height: "250px",
+                                                    padding: "10px"
                                                 }}
                                             >
-                                                <b>{classData.classname}</b>
+                                                <div className='h-100 d-flex flex-column justify-content-center align-items-center rounded'
+                                                    style={{
+                                                        border: `3px solid ${colors.dark}`,
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
+                                                    <b>{classData.classname}</b>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     )
                                 })}
                                 <div className="col"
@@ -233,7 +240,7 @@ function Homepage() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div >
             ) : (
                 <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
                     <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -268,21 +275,28 @@ function Homepage() {
                             <div className="row row-cols-md-4 row-cols-sm-2 row-cols-1 row-gap-1">
                                 {classes.map((classData, index) => {
                                     return (
-                                        <div className="col" key={index}
+                                        <Link className="p-0" to={`/class/${classData.id}`} key={index}
                                             style={{
-                                                height: "250px",
-                                                padding: "10px"
+                                                textDecoration: "none",
+                                                color: colors.dark
                                             }}
                                         >
-                                            <div className='h-100 d-flex flex-column justify-content-center align-items-center rounded'
+                                            <div className="col"
                                                 style={{
-                                                    border: `3px solid ${colors.dark}`,
-                                                    cursor: "pointer",
+                                                    height: "250px",
+                                                    padding: "10px"
                                                 }}
                                             >
-                                                <b>{classData.classname}</b>
+                                                <div className='h-100 d-flex flex-column justify-content-center align-items-center rounded'
+                                                    style={{
+                                                        border: `3px solid ${colors.dark}`,
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
+                                                    <b>{classData.classname}</b>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     )
                                 })}
                                 <div className="col"

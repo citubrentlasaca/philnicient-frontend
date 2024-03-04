@@ -9,6 +9,7 @@ function SignUpPage() {
     const [middleName, setMiddleName] = useState('');
     const [lastName, setLastName] = useState('');
     const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [role, setRole] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +33,11 @@ function SignUpPage() {
         setUsernameError(false);
     }
 
+    const handleEmailChange = (event) => {
+        setEmail(event.target.value);
+        setUsernameError(false);
+    }
+
     const handleRoleChange = (event) => {
         setRole(event.target.value);
     }
@@ -45,6 +51,7 @@ function SignUpPage() {
             firstname: firstName,
             middlename: middleName,
             lastname: lastName,
+            email: email,
             username: username,
             password: password,
             role: role
@@ -97,17 +104,22 @@ function SignUpPage() {
                         </div>
                     </div>
                     <div className="w-100">
-                        <label htmlFor="UsernameInput" className="form-label">Username</label>
-                        <input type="text" className="form-control" id="UsernameInput" style={{ borderColor: usernameError && colors.wrong }} onChange={handleUsernameChange} />
-                        {usernameError ? <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>Username already exists.</p> : null}
-                    </div>
-                    <div className="w-100">
                         <label htmlFor="RoleInput" className="form-label">Role</label>
                         <select className="form-select" id='RoleInput' defaultValue="Placeholder" onChange={handleRoleChange}>
                             <option value="Placeholder" disabled>Select a role</option>
                             <option value="Student">Student</option>
                             <option value="Teacher">Teacher</option>
                         </select>
+                    </div>
+                    <div className="w-100">
+                        <label htmlFor="emailInput" className="form-label">Email Address</label>
+                        <input type="text" className="form-control" id="emailInput" style={{ borderColor: usernameError && colors.wrong }} onChange={handleEmailChange} />
+                        {usernameError ? <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>Email Address/Username already exists.</p> : null}
+                    </div>
+                    <div className="w-100">
+                        <label htmlFor="UsernameInput" className="form-label">Username</label>
+                        <input type="text" className="form-control" id="UsernameInput" style={{ borderColor: usernameError && colors.wrong }} onChange={handleUsernameChange} />
+                        {usernameError ? <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>Email Address/Username already exists.</p> : null}
                     </div>
 
                     <div className="w-100">

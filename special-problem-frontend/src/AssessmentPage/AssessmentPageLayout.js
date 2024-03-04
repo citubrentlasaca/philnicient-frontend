@@ -1,13 +1,42 @@
 import React, { useEffect, useState } from 'react'
 import AssessmentPageHeader from './AssessmentPageHeader'
 import AssessmentPageFooter from './AssessmentPageFooter'
+import axios from 'axios';
 
-function AssessmentPageLayout({ children, itemNumber, totalItems, questions }) {
+function AssessmentPageLayout({ children, itemNumber, totalItems, questions, studentAssessmentId }) {
     const [timeRemaining, setTimeRemaining] = useState({
         hours: 2,
         minutes: 30,
         seconds: 0,
     });
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(`http://127.0.0.1:5000/api/assessments/${studentAssessmentId}`);
+
+                const { datetimecreated } = response.data;
+                const currentTime = new Date();
+                const assessmentTime = new Date(datetimecreated);
+                const timeDifference = Math.abs(currentTime - assessmentTime);
+
+                const remainingMilliseconds = 2 * 60 * 60 * 1000 + 30 * 60 * 1000 - timeDifference;
+                const remainingHours = Math.floor(remainingMilliseconds / (1000 * 60 * 60));
+                const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+                const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
+
+                setTimeRemaining({
+                    hours: remainingHours,
+                    minutes: remainingMinutes,
+                    seconds: remainingSeconds,
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     useEffect(() => {
         const countdown = setInterval(() => {

@@ -2,13 +2,41 @@ import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
-function LandingPageHeader() {
+function LandingPageHeader({ questions, selectedQuestion, classId }) {
     const navigate = useNavigate()
+    const userDataString = sessionStorage.getItem('userData');
+    const userObject = JSON.parse(userDataString);
+    const userData = userObject.user;
 
-    const handleYesButtonClick = () => {
-        navigate('/assessment');
+    const handleYesButtonClick = async () => {
+        try {
+            const response1 = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                headers: {
+                    Authorization: `Bearer ${userObject.access_token}`
+                }
+            });
+            const studentId = response1.data.find(student => student.student_id === userData.id)?.id;
+            if (!studentId) {
+                console.error('Student ID not found');
+            }
+
+            const response2 = await axios.get('http://127.0.0.1:5000/api/assessments');
+
+            const studentAssessments = response2.data.filter(assessment => assessment.student_id === studentId);
+
+            navigate(`/assessment/${studentAssessments[0].id}`, {
+                state: {
+                    tempQuestions: questions,
+                    tempSelectedQuestion: selectedQuestion,
+                }
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
     }
+
     return (
         <div className='w-100 p-4 d-flex flex-row justify-content-between align-items-center'
             style={{

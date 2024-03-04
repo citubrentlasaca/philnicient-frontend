@@ -1,5 +1,5 @@
-import React from 'react'
-import LandingPageHeader from './InstructionsPageHeader'
+import React, { useEffect } from 'react'
+import InstructionsPageHeader from './InstructionsPageHeader'
 import colors from '../colors'
 import answerquestions from '../Images/answerquestions.png'
 import mark from '../Images/mark.png'
@@ -11,11 +11,22 @@ import start from '../Images/start.png'
 import status from '../Images/status.png'
 import submit from '../Images/submit.png'
 import timeremaining from '../Images/timeremaining.png'
+import { useLocation } from 'react-router-dom'
 
 function LandingPage() {
+    const location = useLocation();
+    const { tempQuestions, tempSelectedQuestion, classId } = location.state || {};
+
+    useEffect(() => {
+        const modalBackdrop = document.querySelector('.modal-backdrop.fade.show');
+        if (modalBackdrop) {
+            modalBackdrop.parentNode.removeChild(modalBackdrop);
+        }
+    }, []);
+
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
-            <LandingPageHeader />
+            <InstructionsPageHeader questions={tempQuestions} selectedQuestion={tempSelectedQuestion} classId={classId} />
             <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-center gap-4'
                 style={{
                     height: "calc(100% - 100px)",
