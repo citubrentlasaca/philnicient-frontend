@@ -40,7 +40,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
 
     useEffect(() => {
         const countdown = setInterval(() => {
-            if (timeRemaining.hours === 0 && timeRemaining.minutes === 0 && timeRemaining.seconds === 0) {
+            if (timeRemaining.hours <= 0 && timeRemaining.minutes <= 0 && timeRemaining.seconds <= 0) {
                 clearInterval(countdown);
             } else {
                 setTimeRemaining((prevTime) => {
@@ -80,7 +80,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
             >
                 {children}
             </main>
-            <AssessmentPageFooter itemNumber={itemNumber} totalItems={totalItems} questions={questions} timeRemaining={timeRemaining} />
+            <AssessmentPageFooter itemNumber={itemNumber} totalItems={totalItems} questions={questions} timeRemaining={timeRemaining} assessmentId={studentAssessmentId} />
         </div>
     )
 }

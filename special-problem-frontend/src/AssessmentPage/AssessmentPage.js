@@ -12,6 +12,9 @@ function AssessmentPage() {
     const [certaintyIndex, setCertaintyIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const { assessmentId } = useParams();
+    const userDataString = sessionStorage.getItem('userData');
+    const userObject = JSON.parse(userDataString);
+    const userData = userObject.user;
 
     useEffect(() => {
         if (questions && selectedQuestion) {
@@ -64,6 +67,36 @@ function AssessmentPage() {
                     console.error('Error fetching student assessments:', error);
                 });
         }
+    }, []);
+
+    useEffect(() => {
+        const intervalId = setInterval(async () => {
+            try {
+                for (const question of questions) {
+                    await axios.put(`http://127.0.0.1:5000/api/questions/${question.id}`, {
+                        question: question.question,
+                        figure: question.figure,
+                        choices: question.choices,
+                        answer: question.answer,
+                        major_category: question.majorCategory,
+                        student_answer: question.studentAnswer,
+                        student_cri: question.studentCRI,
+                        is_for_review: question.isForReview,
+                        time: question.time,
+                        assessment_id: question.assessmentId
+                    }, {
+                        headers: {
+                            Authorization: `Bearer ${userObject.access_token}`
+                        }
+                    });
+                }
+                console.log('Progress saved successfully');
+            } catch (error) {
+                console.error('Error updating questions:', error);
+            }
+        }, 5 * 60 * 1000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     const getCertaintyLabel = (studentCRI) => {

@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios';
 
-function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining }) {
+function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId }) {
     const [score, setScore] = useState(0);
     const [modelInputs, setModelInputs] = useState([])
     const navigate = useNavigate()
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         questions.forEach((question) => {
             if (question.answer === question.studentAnswer) {
                 setScore((prevScore) => prevScore + 1);
@@ -58,6 +59,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
         });
 
         setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
+        await axios.delete(`http://127.0.0.1:5000/api/assessments/${assessmentId}`);
         navigate('/results');
     };
 

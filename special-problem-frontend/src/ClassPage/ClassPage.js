@@ -38,8 +38,24 @@ function ClassPage() {
                         }
                     });
                     if (assessmentResponse.data) {
-                        setHasActiveAssessment(true);
-                        setAssessmentId(assessmentResponse.data.assessment_id);
+                        const response = await axios.get(`http://127.0.0.1:5000/api/assessments/${assessmentResponse.data.assessment_id}`);
+
+                        const { datetimecreated } = response.data;
+                        const currentTime = new Date();
+                        const assessmentTime = new Date(datetimecreated);
+                        const timeDifference = Math.abs(currentTime - assessmentTime);
+
+                        const remainingMilliseconds = 2 * 60 * 60 * 1000 + 30 * 60 * 1000 - timeDifference;
+                        const remainingHours = Math.floor(remainingMilliseconds / (1000 * 60 * 60));
+                        const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+                        const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
+                        if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
+                            await axios.delete(`http://127.0.0.1:5000/api/assessments/${assessmentResponse.data.assessment_id}`);
+                        }
+                        else {
+                            setHasActiveAssessment(true);
+                            setAssessmentId(assessmentResponse.data.assessment_id);
+                        }
                     }
                 } catch (assessmentError) {
                     if (assessmentError.response.status === 404) {
@@ -141,9 +157,9 @@ function ClassPage() {
                     });
 
                     const studentAssessmentId = studentAssessmentResponse.data.id;
-
+                    const postResponses = [];
                     for (const question of allDocuments) {
-                        await axios.post('http://127.0.0.1:5000/api/questions', {
+                        const response = await axios.post('http://127.0.0.1:5000/api/questions', {
                             question: question.question,
                             figure: question.figure,
                             choices: question.choices,
@@ -159,11 +175,24 @@ function ClassPage() {
                                 Authorization: `Bearer ${userObject.access_token}`
                             }
                         });
+                        postResponses.push({
+                            id: response.data.id,
+                            question: response.data.question,
+                            figure: response.data.figure,
+                            choices: response.data.choices,
+                            answer: response.data.answer,
+                            majorCategory: response.data.major_category,
+                            studentAnswer: response.data.student_answer,
+                            studentCRI: response.data.student_cri,
+                            isForReview: response.data.is_for_review,
+                            time: response.data.time,
+                            assessmentId: response.data.assessment_id
+                        });
                     }
 
                     navigate('/instructions', {
                         state: {
-                            tempQuestions: allDocuments,
+                            tempQuestions: postResponses,
                             tempSelectedQuestion: firstQuestion,
                             classId: classId,
                         }

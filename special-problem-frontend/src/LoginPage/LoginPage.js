@@ -105,10 +105,12 @@ function LoginPage() {
                         <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>User does not exist.</p>
                     )}
                 </div>
-                <p className='mb-0'>Don't have an account yet? Sign up <Link to="/signup" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
-                <Link to="/forgotpassword" style={{ textDecoration: "none" }}>
-                    <p className='mb-0' style={{ color: colors.accent }}>Forgot password?</p>
-                </Link>
+                <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
+                    <p className='mb-0'>Don't have an account yet? Sign up <Link to="/signup" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
+                    <Link to="/forgotpassword" style={{ textDecoration: "none" }}>
+                        <p className='mb-0' style={{ color: colors.accent }}>Forgot password?</p>
+                    </Link>
+                </div>
             </div>
         </div>
     )
