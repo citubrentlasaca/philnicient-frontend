@@ -3,7 +3,7 @@ import AssessmentPageHeader from './AssessmentPageHeader'
 import AssessmentPageFooter from './AssessmentPageFooter'
 import axios from 'axios';
 
-function AssessmentPageLayout({ children, itemNumber, totalItems, questions, studentAssessmentId }) {
+function AssessmentPageLayout({ children, itemNumber, totalItems, questions, studentAssessmentId, classId, studentId }) {
     const [timeRemaining, setTimeRemaining] = useState({
         hours: 2,
         minutes: 30,
@@ -80,7 +80,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
             >
                 {children}
             </main>
-            <AssessmentPageFooter itemNumber={itemNumber} totalItems={totalItems} questions={questions} timeRemaining={timeRemaining} assessmentId={studentAssessmentId} />
+            <AssessmentPageFooter itemNumber={itemNumber} totalItems={totalItems} questions={questions} timeRemaining={timeRemaining} assessmentId={studentAssessmentId} classId={classId} studentId={studentId} />
         </div>
     )
 }

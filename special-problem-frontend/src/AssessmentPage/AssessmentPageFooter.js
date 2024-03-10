@@ -4,29 +4,31 @@ import logo from '../Icons/logo.png'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios';
 
-function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId }) {
+function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId, classId, studentId }) {
     const [score, setScore] = useState(0);
     const [modelInputs, setModelInputs] = useState([])
     const navigate = useNavigate()
 
     const handleSubmit = async () => {
+        const categoryToNumber = {
+            'Basic Theory': 1,
+            'Computer Systems': 2,
+            'Technical Elements': 3,
+            'Development Techniques': 4,
+            'Project Management': 5,
+            'Service Management': 6,
+            'System Strategy': 7,
+            'Management Strategy': 8,
+            'Corporate & Legal Affairs': 9,
+        };
+
         questions.forEach((question) => {
             if (question.answer === question.studentAnswer) {
                 setScore((prevScore) => prevScore + 1);
             }
         });
 
-        const tagsToHandle = [
-            'Basic Theory',
-            'Computer Systems',
-            'Technical Elements',
-            'Development Techniques',
-            'Project Management',
-            'Service Management',
-            'System Strategy',
-            'Management Strategy',
-            'Corporate & Legal Affairs',
-        ];
+        const tagsToHandle = Object.keys(categoryToNumber);
 
         let modelInputsData = [];
 
@@ -50,7 +52,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
             const averageCRI = numberOfItems > 0 ? totalCRI / numberOfItems : 0;
 
             modelInputsData.push({
-                majorCategory: majorCategory,
+                majorCategory: categoryToNumber[majorCategory],
                 numberOfItems,
                 score: tagScore,
                 totalTimeTaken,
@@ -60,7 +62,14 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
 
         setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
         await axios.delete(`http://127.0.0.1:5000/api/assessments/${assessmentId}`);
-        navigate('/results');
+        navigate(`/results`, {
+            state: {
+                modelInputsData: modelInputsData,
+                studentId: studentId,
+                totalItems: totalItems,
+                classId: classId,
+            }
+        });
     };
 
     useEffect(() => {

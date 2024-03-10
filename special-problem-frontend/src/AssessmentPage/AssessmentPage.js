@@ -6,7 +6,7 @@ import axios from 'axios';
 
 function AssessmentPage() {
     const location = useLocation();
-    const { tempQuestions, tempSelectedQuestion } = location.state || {};
+    const { tempQuestions, tempSelectedQuestion, classId, studentId } = location.state || {};
     const [questions, setQuestions] = useState(tempQuestions);
     const [selectedQuestion, setSelectedQuestion] = useState(tempSelectedQuestion);
     const [certaintyIndex, setCertaintyIndex] = useState(0);
@@ -250,7 +250,7 @@ function AssessmentPage() {
             </div>
         ) :
             (selectedQuestion && (
-                <AssessmentPageLayout itemNumber={selectedQuestion.itemNumber} totalItems={questions.length} questions={questions} studentAssessmentId={assessmentId}>
+                <AssessmentPageLayout itemNumber={selectedQuestion.itemNumber} totalItems={questions.length} questions={questions} studentAssessmentId={assessmentId} classId={classId} studentId={studentId}>
                     <div className='w-100 h-100 d-flex flex-row justify-content-start align-items-start'>
                         <div className='w-25 h-100 p-4'
                             style={{

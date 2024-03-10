@@ -4,7 +4,7 @@ import logo from '../Icons/logo.png'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-function LandingPageHeader({ questions, selectedQuestion, classId }) {
+function LandingPageHeader({ questions, selectedQuestion, classId, studentId }) {
     const navigate = useNavigate()
     const userDataString = sessionStorage.getItem('userData');
     const userObject = JSON.parse(userDataString);
@@ -30,6 +30,8 @@ function LandingPageHeader({ questions, selectedQuestion, classId }) {
                 state: {
                     tempQuestions: questions,
                     tempSelectedQuestion: selectedQuestion,
+                    classId: classId,
+                    studentId: studentId,
                 }
             });
         } catch (error) {

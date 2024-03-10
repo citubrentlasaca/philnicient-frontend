@@ -15,7 +15,7 @@ import { useLocation } from 'react-router-dom'
 
 function LandingPage() {
     const location = useLocation();
-    const { tempQuestions, tempSelectedQuestion, classId } = location.state || {};
+    const { tempQuestions, tempSelectedQuestion, classId, studentId } = location.state || {};
 
     useEffect(() => {
         const modalBackdrop = document.querySelector('.modal-backdrop.fade.show');
@@ -26,7 +26,7 @@ function LandingPage() {
 
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
-            <InstructionsPageHeader questions={tempQuestions} selectedQuestion={tempSelectedQuestion} classId={classId} />
+            <InstructionsPageHeader questions={tempQuestions} selectedQuestion={tempSelectedQuestion} classId={classId} studentId={studentId} />
             <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-center gap-4'
                 style={{
                     height: "calc(100% - 100px)",

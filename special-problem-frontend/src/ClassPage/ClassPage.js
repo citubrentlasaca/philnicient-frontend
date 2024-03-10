@@ -195,6 +195,7 @@ function ClassPage() {
                             tempQuestions: postResponses,
                             tempSelectedQuestion: firstQuestion,
                             classId: classId,
+                            studentId: studentId,
                         }
                     });
                 }
@@ -206,8 +207,20 @@ function ClassPage() {
         fetchData();
     }
 
-    const handleContinueAssessmentClick = () => {
-        navigate(`/assessment/${assessmentId}`)
+    const handleContinueAssessmentClick = async () => {
+        const studentResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+            headers: {
+                Authorization: `Bearer ${userObject.access_token}`
+            }
+        });
+
+        const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
+        navigate(`/assessment/${assessmentId}`, {
+            state: {
+                studentId: studentId,
+                classId: classId,
+            }
+        });
     }
 
     return (
