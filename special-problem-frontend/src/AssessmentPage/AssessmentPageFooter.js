@@ -69,7 +69,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
                 modelInputsData: modelInputsData,
                 studentId: studentId,
                 totalItems: totalItems,
-                classId: classId,
+                classId: classId
             }
         });
     };

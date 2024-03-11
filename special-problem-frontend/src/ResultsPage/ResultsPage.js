@@ -53,7 +53,11 @@ function ResultsPage() {
     const options = {
         scale: {
             type: 'radialLinear',
-            ticks: { beginAtZero: true }
+            ticks: {
+                min: 0,
+                max: 100,
+                beginAtZero: true
+            }
         }
     };
 
@@ -174,7 +178,7 @@ function ResultsPage() {
             try {
                 await axios.post('http://127.0.0.1:5000/api/assessment_results', {
                     total_score: totalScore,
-                    total_items: updatedResultsData.length,
+                    total_items: totalItems,
                     basic_theory_score: updatedResultsData[0].score,
                     computer_systems_score: updatedResultsData[1].score,
                     technical_elements_score: updatedResultsData[2].score,
@@ -198,7 +202,7 @@ function ResultsPage() {
                 });
                 await axios.put(`http://127.0.0.1:5000/api/assessment_results/${studentAssessmentResult.data.id}`, {
                     total_score: totalScore,
-                    total_items: updatedResultsData.length,
+                    total_items: totalItems,
                     basic_theory_score: updatedResultsData[0].score,
                     computer_systems_score: updatedResultsData[1].score,
                     technical_elements_score: updatedResultsData[2].score,
@@ -244,19 +248,20 @@ function ResultsPage() {
             const averageScoringRate = [];
             let currentCategory = tempAllModelResultsArray[0].major_category;
             let score = 0;
-            let itemCount = 0;
+            let items = 0;
             tempAllModelResultsArray.forEach((modelResult, index, array) => {
                 if (modelResult.major_category === currentCategory) {
                     score += modelResult.total_score;
-                    itemCount++;
-                    if (index === array.length - 1) {
-                        averageScoringRate.push((score / itemCount) * 100);
-                    }
+                    items += modelResult.number_of_items;
                 } else {
-                    averageScoringRate.push((score / itemCount) * 100);
+                    averageScoringRate.push(Math.round((score / items) * 100));
                     currentCategory = modelResult.major_category;
                     score = modelResult.total_score;
-                    itemCount = 1;
+                    items = modelResult.number_of_items;
+                }
+
+                if (index === array.length - 1) {
+                    averageScoringRate.push(Math.round((score / items) * 100));
                 }
             });
 
@@ -318,7 +323,7 @@ function ResultsPage() {
                         </thead>
                         <tbody>
                             <tr>
-                                <td>{comprehensiveAnalysis.totalScore}/{results.length}</td>
+                                <td>{comprehensiveAnalysis.totalScore}/{totalItems}</td>
                                 <td>{comprehensiveAnalysis.percentageOfScore}</td>
                                 <td>{comprehensiveAnalysis.classAverage}</td>
                                 <td>{comprehensiveAnalysis.top30Score}</td>

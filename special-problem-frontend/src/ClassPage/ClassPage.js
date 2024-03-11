@@ -60,7 +60,11 @@ function ClassPage() {
     const options = {
         scale: {
             type: 'radialLinear',
-            ticks: { beginAtZero: true }
+            ticks: {
+                min: 0,
+                max: 100,
+                beginAtZero: true
+            }
         }
     };
 
@@ -192,20 +196,21 @@ function ClassPage() {
                 const myScoringRate = tempModelResultsArray.map(result => Math.round((result.total_score / result.number_of_items) * 100));
                 const averageScoringRate = [];
                 let currentCategory = tempAllModelResultsArray[0].major_category;
-                let totalScore = 0;
-                let itemCount = 0;
+                let score = 0;
+                let items = 0;
                 tempAllModelResultsArray.forEach((modelResult, index, array) => {
                     if (modelResult.major_category === currentCategory) {
-                        totalScore += modelResult.total_score;
-                        itemCount++;
-                        if (index === array.length - 1) {
-                            averageScoringRate.push((totalScore / itemCount) * 100);
-                        }
+                        score += modelResult.total_score;
+                        items += modelResult.number_of_items;
                     } else {
-                        averageScoringRate.push((totalScore / itemCount) * 100);
+                        averageScoringRate.push(Math.round((score / items) * 100));
                         currentCategory = modelResult.major_category;
-                        totalScore = modelResult.total_score;
-                        itemCount = 1;
+                        score = modelResult.total_score;
+                        items = modelResult.number_of_items;
+                    }
+
+                    if (index === array.length - 1) {
+                        averageScoringRate.push(Math.round((score / items) * 100));
                     }
                 });
 
@@ -271,15 +276,15 @@ function ClassPage() {
                     }));
                 };
 
-                const basictheory = await fetchDocuments("Technology", "Basic Theory", 1);
-                const computersystems = await fetchDocuments("Technology", "Computer Systems", 1);
-                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 1);
-                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 1);
-                const projectmanagement = await fetchDocuments("Management", "Project Management", 1);
-                const servicemanagement = await fetchDocuments("Management", "Service Management", 1);
-                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 1);
-                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 1);
-                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 1);
+                const basictheory = await fetchDocuments("Technology", "Basic Theory", 15);
+                const computersystems = await fetchDocuments("Technology", "Computer Systems", 15);
+                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 20);
+                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 5);
+                const projectmanagement = await fetchDocuments("Management", "Project Management", 5);
+                const servicemanagement = await fetchDocuments("Management", "Service Management", 5);
+                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 5);
+                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 5);
+                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 5);
 
                 const allDocuments = [
                     ...basictheory,
