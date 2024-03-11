@@ -1,8 +1,16 @@
 import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
+import { Link, useNavigate } from 'react-router-dom'
 
 function ClassPageHeader() {
+    const navigate = useNavigate();
+
+    const handleLogoutClick = () => {
+        sessionStorage.clear();
+        navigate('/login');
+    }
+
     return (
         <div className='w-100 p-4 d-flex flex-row justify-content-between align-items-center'
             style={{
@@ -11,12 +19,25 @@ function ClassPageHeader() {
 
             }}
         >
-            <img src={logo} alt="Logo"
+            <Link to='/'>
+                <img src={logo} alt="Logo"
+                    style={{
+                        height: "50px",
+                        width: "50px"
+                    }}
+                />
+            </Link>
+            <button className="btn btn-primary" type="button" onClick={handleLogoutClick}
                 style={{
-                    height: "50px",
-                    width: "50px"
+                    width: "100px",
+                    borderRadius: "10px",
+                    backgroundColor: colors.accent,
+                    borderColor: colors.accent,
+                    color: colors.darkest,
                 }}
-            />
+            >
+                Logout
+            </button>
         </div>
     )
 }

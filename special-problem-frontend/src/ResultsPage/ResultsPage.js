@@ -3,7 +3,7 @@ import colors from '../colors';
 import ResultsPageHeader from './ResultsPageHeader';
 import 'chart.js/auto';
 import { Radar } from 'react-chartjs-2';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 function ResultsPage() {
@@ -50,6 +50,12 @@ function ResultsPage() {
             pointHoverBorderColor: 'rgb(54, 162, 235)'
         }]
     });
+    const options = {
+        scale: {
+            type: 'radialLinear',
+            ticks: { beginAtZero: true }
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -87,6 +93,15 @@ function ResultsPage() {
 
             await Promise.all(postRequests);
 
+            const studentIdsInClass = [];
+            const studentsInClass = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                headers: {
+                    Authorization: `Bearer ${userObject.access_token}`
+                }
+            });
+            studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
+
+            const tempAllModelResultsArray = [];
             try {
                 const tempArray = [];
                 const getModelResults = await axios.get('http://127.0.0.1:5000/api/model_results', {
@@ -100,6 +115,14 @@ function ResultsPage() {
                         tempArray.push(modelResult);
                     }
                 });
+                for (const studentIdInClass of studentIdsInClass) {
+                    getModelResults.data.forEach((modelResult) => {
+                        if (modelResult.student_id === studentIdInClass) {
+                            tempAllModelResultsArray.push(modelResult);
+                        }
+                    });
+                }
+                tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
 
                 for (const model of tempArray) {
                     try {
@@ -133,14 +156,6 @@ function ResultsPage() {
             const totalScore = updatedResultsData.reduce((acc, result) => acc + result.score, 0);
             const percentageOfScore = ((totalScore / totalItems) * 100).toFixed(2) + "%";
 
-            const studentIdsInClass = [];
-            const studentsInClass = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
-                headers: {
-                    Authorization: `Bearer ${userObject.access_token}`
-                }
-            });
-            studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
-
             const tempArray = [];
             for (const studentId of studentIdsInClass) {
                 try {
@@ -156,21 +171,10 @@ function ResultsPage() {
                 }
             }
 
-            const categoryAverages = Array(9).fill(0);
-            updatedResultsData.forEach(result => {
-                const categoryIndex = result.majorCategory - 1;
-                const numberOfItems = result.numberOfItems;
-                categoryAverages[categoryIndex] += (result.score / numberOfItems);
-            });
-
-            for (let i = 0; i < categoryAverages.length; i++) {
-                const numberOfItems = updatedResultsData.find(result => result.majorCategory === (i + 1)).numberOfItems;
-                categoryAverages[i] = ((categoryAverages[i] / studentIdsInClass.length) * 100 / numberOfItems).toFixed(2);
-            }
-
             try {
                 await axios.post('http://127.0.0.1:5000/api/assessment_results', {
                     total_score: totalScore,
+                    total_items: updatedResultsData.length,
                     basic_theory_score: updatedResultsData[0].score,
                     computer_systems_score: updatedResultsData[1].score,
                     technical_elements_score: updatedResultsData[2].score,
@@ -194,6 +198,7 @@ function ResultsPage() {
                 });
                 await axios.put(`http://127.0.0.1:5000/api/assessment_results/${studentAssessmentResult.data.id}`, {
                     total_score: totalScore,
+                    total_items: updatedResultsData.length,
                     basic_theory_score: updatedResultsData[0].score,
                     computer_systems_score: updatedResultsData[1].score,
                     technical_elements_score: updatedResultsData[2].score,
@@ -229,13 +234,31 @@ function ResultsPage() {
                 }
             }
             studentScores.sort((a, b) => b - a);
-            const classAverage = totalClassScore / studentIdsInClass.length;
+            const classAverage = (totalClassScore / studentIdsInClass.length).toFixed(2);
             const top30Index = Math.ceil(studentScores.length * 0.3);
             const top30Score = studentScores[top30Index - 1];
             const top10Index = Math.ceil(studentScores.length * 0.1);
             const top10Score = studentScores[top10Index - 1];
 
-            const percentages = resultsData.map(result => Math.round((result.score / result.numberOfItems) * 100));
+            const myScoringRate = resultsData.map(result => Math.round((result.score / result.numberOfItems) * 100));
+            const averageScoringRate = [];
+            let currentCategory = tempAllModelResultsArray[0].major_category;
+            let score = 0;
+            let itemCount = 0;
+            tempAllModelResultsArray.forEach((modelResult, index, array) => {
+                if (modelResult.major_category === currentCategory) {
+                    score += modelResult.total_score;
+                    itemCount++;
+                    if (index === array.length - 1) {
+                        averageScoringRate.push((score / itemCount) * 100);
+                    }
+                } else {
+                    averageScoringRate.push((score / itemCount) * 100);
+                    currentCategory = modelResult.major_category;
+                    score = modelResult.total_score;
+                    itemCount = 1;
+                }
+            });
 
             setResults(updatedResultsData);
             setComprehensiveAnalysis({ totalScore, percentageOfScore, classAverage, top30Score, top10Score });
@@ -243,10 +266,10 @@ function ResultsPage() {
                 ...prevChartData,
                 datasets: [{
                     ...prevChartData.datasets[0],
-                    data: percentages
+                    data: myScoringRate
                 }, {
                     ...prevChartData.datasets[1],
-                    data: categoryAverages
+                    data: averageScoringRate
                 }]
             }));
             setLoading(false);
@@ -254,14 +277,6 @@ function ResultsPage() {
 
         fetchData();
     }, [modelInputsData]);
-
-    const options = {
-        scale: {
-            type: 'radialLinear',
-            ticks: { beginAtZero: true }
-        }
-    };
-
 
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
@@ -303,7 +318,7 @@ function ResultsPage() {
                         </thead>
                         <tbody>
                             <tr>
-                                <td>{comprehensiveAnalysis.totalScore}/9</td>
+                                <td>{comprehensiveAnalysis.totalScore}/{results.length}</td>
                                 <td>{comprehensiveAnalysis.percentageOfScore}</td>
                                 <td>{comprehensiveAnalysis.classAverage}</td>
                                 <td>{comprehensiveAnalysis.top30Score}</td>
@@ -420,6 +435,17 @@ function ResultsPage() {
                             ))}
                         </tbody>
                     </table>
+                    <Link to='/'>
+                        <button className='btn btn-primary'
+                            style={{
+                                color: colors.dark,
+                                backgroundColor: colors.accent,
+                                border: "none",
+                                width: "200px"
+                            }}>
+                            Go back to Home
+                        </button>
+                    </Link>
                 </div>
             )}
         </div>

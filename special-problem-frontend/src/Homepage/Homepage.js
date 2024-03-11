@@ -18,6 +18,7 @@ function Homepage() {
     const [classes, setClasses] = useState([]);
     const [classCodeInput, setClassCodeInput] = useState('')
     const [classCodeError, setClassCodeError] = useState(false)
+    const [buttonLoading, setButtonLoading] = useState(false)
     const navigate = useNavigate();
 
     const handleClassNameChange = (e) => {
@@ -54,6 +55,7 @@ function Homepage() {
     }
 
     const handleJoinClassClick = () => {
+        setButtonLoading(true);
         axios.get(`http://127.0.0.1:5000/api/classes/code/${classCodeInput}`)
             .then(response => {
                 const classData = response.data;
@@ -76,6 +78,7 @@ function Homepage() {
             .catch(error => {
                 console.error('Error finding class:', error);
                 setClassCodeError(true)
+                setButtonLoading(false)
             });
     }
 
@@ -128,62 +131,62 @@ function Homepage() {
     }, [userData.id, userData.role]);
 
     return (
-        loading ? (
-            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                <div className="spinner-border" role="status"
-                    style={{
-                        color: colors.accent
-                    }}
-                >
-                    <span className="visually-hidden">Loading...</span>
+        role === 'Teacher' ? (
+            <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
+                <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div className="modal-body">
+                                <label htmlFor="classNameInput" className="form-label">Class name</label>
+                                <input type="text" className="form-control" id="classNameInput" onChange={handleClassNameChange} />
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-primary" data-bs-dismiss="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Cancel</button>
+                                <button type="button" className="btn btn-primary" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleCreateClassClick}>Create</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        ) : (
-            role === 'Teacher' ? (
-                <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
-                    <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
-                        <div className="modal-dialog modal-dialog-centered">
-                            <div className="modal-content">
-                                <div className="modal-header">
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div className="modal-body">
-                                    <label htmlFor="classNameInput" className="form-label">Class name</label>
-                                    <input type="text" className="form-control" id="classNameInput" onChange={handleClassNameChange} />
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-primary" data-bs-dismiss="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Cancel</button>
-                                    <button type="button" className="btn btn-primary" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleCreateClassClick}>Create</button>
-                                </div>
+                <div className="modal fade" id="exampleModalToggle2" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick={handlePostClassCreation}></button>
                             </div>
-                        </div>
-                    </div>
-                    <div className="modal fade" id="exampleModalToggle2" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                        <div className="modal-dialog modal-dialog-centered">
-                            <div className="modal-content">
-                                <div className="modal-header">
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick={handlePostClassCreation}></button>
-                                </div>
-                                <div className="modal-body d-flex flex-column justify-content-center align-items-center">
-                                    <p>Copy this code to let students join your class:</p>
-                                    {classCodeLoading ? (
-                                        <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                            <div className="spinner-border" role="status"
-                                                style={{
-                                                    color: colors.accent
-                                                }}
-                                            >
-                                                <span className="visually-hidden">Loading...</span>
-                                            </div>
+                            <div className="modal-body d-flex flex-column justify-content-center align-items-center">
+                                <p>Copy this code to let students join your class:</p>
+                                {classCodeLoading ? (
+                                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                                        <div className="spinner-border" role="status"
+                                            style={{
+                                                color: colors.accent
+                                            }}
+                                        >
+                                            <span className="visually-hidden">Loading...</span>
                                         </div>
-                                    ) : (
-                                        <h1>{classCode}</h1>
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    <h1>{classCode}</h1>
+                                )}
                             </div>
                         </div>
                     </div>
-                    <HomepageHeader />
+                </div>
+                <HomepageHeader />
+                {loading ? (
+                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                        <div className="spinner-border" role="status"
+                            style={{
+                                color: colors.accent
+                            }}
+                        >
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                ) : (
                     <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-start gap-4'
                         style={{
                             height: "calc(100% - 100px)",
@@ -240,30 +243,58 @@ function Homepage() {
                             </div>
                         </div>
                     </div>
-                </div >
-            ) : (
-                <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
-                    <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div className="modal-dialog modal-dialog-centered">
-                            <div className="modal-content">
-                                <div className="modal-header">
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div className="modal-body">
-                                    <label htmlFor="classCodeInput" className="form-label">Class code</label>
-                                    <input type="text" className="form-control" id="classCodeInput" onChange={handleClassCodeInputChange} />
-                                    {classCodeError && (
-                                        <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>Class does not exist.</p>
+                )}
+
+            </div >
+        ) : (
+            <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
+                <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div className="modal-body">
+                                <label htmlFor="classCodeInput" className="form-label">Class code</label>
+                                <input type="text" className="form-control" id="classCodeInput" onChange={handleClassCodeInputChange} />
+                                {classCodeError && (
+                                    <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>Class does not exist.</p>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" style={{ width: "100px", height: "40px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Cancel</button>
+
+                                <button type="button" className="btn btn-primary" style={{ width: "100px", height: "40px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleJoinClassClick}>
+                                    {buttonLoading ? (
+                                        <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                                            <div className="spinner-border spinner-border-sm" role="status"
+                                                style={{
+                                                    color: colors.dark,
+                                                }}
+                                            >
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="mb-0">Join</p>
                                     )}
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Cancel</button>
-                                    <button type="button" className="btn btn-primary" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleJoinClassClick}>Join</button>
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <HomepageHeader />
+                </div>
+                <HomepageHeader />
+                {loading ? (
+                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                        <div className="spinner-border" role="status"
+                            style={{
+                                color: colors.accent
+                            }}
+                        >
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                ) : (
                     <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-start gap-4'
                         style={{
                             height: "calc(100% - 100px)",
@@ -320,8 +351,8 @@ function Homepage() {
                             </div>
                         </div>
                     </div>
-                </div>
-            )
+                )}
+            </div>
         )
     )
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 function LandingPageHeader({ questions, selectedQuestion, classId, studentId }) {
@@ -64,12 +64,14 @@ function LandingPageHeader({ questions, selectedQuestion, classId, studentId }) 
                 </div>
             </div>
             <div className='d-flex flex-row justify-content-center align-items-center gap-4'>
-                <img src={logo} alt="Logo"
-                    style={{
-                        height: "50px",
-                        width: "50px"
-                    }}
-                />
+                <Link to='/'>
+                    <img src={logo} alt="Logo"
+                        style={{
+                            height: "50px",
+                            width: "50px"
+                        }}
+                    />
+                </Link>
             </div>
             <button className="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#staticBackdrop"
                 style={{

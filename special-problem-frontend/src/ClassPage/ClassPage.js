@@ -5,6 +5,7 @@ import { getDocs, collection, query, where } from "firebase/firestore";
 import { firestore } from '../firebaseConfig.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { Radar } from 'react-chartjs-2';
 
 function ClassPage() {
     const userDataString = sessionStorage.getItem('userData');
@@ -19,6 +20,49 @@ function ClassPage() {
     const navigate = useNavigate();
     const { classId } = useParams();
     const [assessmentId, setAssessmentId] = useState(null);
+    const [comprehensiveAnalysis, setComprehensiveAnalysis] = useState(null);
+    const [competencyDiagnosis, setCompetencyDiagnosis] = useState(null);
+    const [previousDataLoading, setPreviousDataLoading] = useState(true);
+    const [chartData, setChartData] = useState({
+        labels: [
+            'Basic Theory',
+            'Computer Systems',
+            'Technical Elements',
+            'Development Techniques',
+            'Project Management',
+            'Service Management',
+            'System Strategy',
+            'Management Strategy',
+            'Corporate & Legal Affairs',
+        ],
+        datasets: [{
+            label: 'My Scoring Rate',
+            data: [],
+            fill: true,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgb(255, 99, 132)',
+            pointBackgroundColor: 'rgb(255, 99, 132)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(255, 99, 132)'
+        }, {
+            label: 'Average Scoring Rate',
+            data: [],
+            fill: true,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgb(54, 162, 235)',
+            pointBackgroundColor: 'rgb(54, 162, 235)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(54, 162, 235)'
+        }]
+    });
+    const options = {
+        scale: {
+            type: 'radialLinear',
+            ticks: { beginAtZero: true }
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -71,6 +115,128 @@ function ClassPage() {
                 console.error("Error fetching data:", error);
             }
         };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const studentResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                    headers: {
+                        Authorization: `Bearer ${userObject.access_token}`
+                    }
+                });
+                const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
+
+                const studentIdsInClass = [];
+                const studentsInClass = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                    headers: {
+                        Authorization: `Bearer ${userObject.access_token}`
+                    }
+                });
+                studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
+
+                const assessmentResponse = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${studentId}`, {
+                    headers: {
+                        Authorization: `Bearer ${userObject.access_token}`
+                    }
+                });
+
+                const tempModelResultsArray = [];
+                const tempAllModelResultsArray = [];
+                const getModelResults = await axios.get('http://127.0.0.1:5000/api/model_results', {
+                    headers: {
+                        Authorization: `Bearer ${userObject.access_token}`
+                    }
+                });
+                getModelResults.data.forEach((modelResult) => {
+                    if (modelResult.student_id === studentId) {
+                        tempModelResultsArray.push(modelResult);
+                    }
+                });
+                for (const studentIdInClass of studentIdsInClass) {
+                    getModelResults.data.forEach((modelResult) => {
+                        if (modelResult.student_id === studentIdInClass) {
+                            tempAllModelResultsArray.push(modelResult);
+                        }
+                    });
+                }
+                tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
+                tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
+
+                let totalClassScore = 0;
+                const studentScores = [];
+                for (const studentId of studentIdsInClass) {
+                    try {
+                        const studentAssessmentResult = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${studentId}`, {
+                            headers: {
+                                Authorization: `Bearer ${userObject.access_token}`
+                            }
+                        });
+                        totalClassScore += studentAssessmentResult.data.total_score;
+                        studentScores.push(studentAssessmentResult.data.total_score);
+                    } catch (error) {
+                        console.error("Error fetching assessment result for student ID:", studentId, error);
+                        continue;
+                    }
+                }
+                studentScores.sort((a, b) => b - a);
+                const assessmentData = assessmentResponse.data;
+                const scorePercentage = ((assessmentData.total_score / assessmentData.total_items) * 100).toFixed(2) + "%";
+                const classAverage = (totalClassScore / studentIdsInClass.length).toFixed(2);
+                const top30Index = Math.ceil(studentScores.length * 0.3);
+                const top30Score = studentScores[top30Index - 1];
+                const top10Index = Math.ceil(studentScores.length * 0.1);
+                const top10Score = studentScores[top10Index - 1];
+
+                const myScoringRate = tempModelResultsArray.map(result => Math.round((result.total_score / result.number_of_items) * 100));
+                const averageScoringRate = [];
+                let currentCategory = tempAllModelResultsArray[0].major_category;
+                let totalScore = 0;
+                let itemCount = 0;
+                tempAllModelResultsArray.forEach((modelResult, index, array) => {
+                    if (modelResult.major_category === currentCategory) {
+                        totalScore += modelResult.total_score;
+                        itemCount++;
+                        if (index === array.length - 1) {
+                            averageScoringRate.push((totalScore / itemCount) * 100);
+                        }
+                    } else {
+                        averageScoringRate.push((totalScore / itemCount) * 100);
+                        currentCategory = modelResult.major_category;
+                        totalScore = modelResult.total_score;
+                        itemCount = 1;
+                    }
+                });
+
+                setComprehensiveAnalysis({
+                    totalScore: assessmentData.total_score,
+                    totalItems: assessmentData.total_items,
+                    scorePercentage: scorePercentage,
+                    classAverage: classAverage,
+                    top30Score: top30Score,
+                    top10Score: top10Score
+                });
+                setChartData(prevChartData => ({
+                    ...prevChartData,
+                    datasets: [{
+                        ...prevChartData.datasets[0],
+                        data: myScoringRate
+                    }, {
+                        ...prevChartData.datasets[1],
+                        data: averageScoringRate
+                    }]
+                }));
+                setCompetencyDiagnosis(tempModelResultsArray);
+                setHasPreviousData(true);
+                setLoading(false);
+                setPreviousDataLoading(false);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                setPreviousDataLoading(false);
+            }
+        };
+
         fetchData();
     }, []);
 
@@ -224,24 +390,215 @@ function ClassPage() {
     }
 
     return (
-        loading ? (
-            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                <div className="spinner-border" role="status"
-                    style={{
-                        color: colors.accent
-                    }}
-                >
-                    <span className="visually-hidden">Loading...</span>
+        <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
+            <div className="modal fade" id="generateAssessmentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
+                            <p className='mb-0'>Generating assessment...</p>
+                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                                <div className="spinner-border" role="status"
+                                    style={{
+                                        color: colors.accent
+                                    }}
+                                >
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        ) : (
-            <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
-                <div className="modal fade" id="generateAssessmentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
-                                <p className='mb-0'>Generating assessment...</p>
-                                <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+            <ClassPageHeader />
+            {loading ? (
+                <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                    <div className="spinner-border" role="status"
+                        style={{
+                            color: colors.accent
+                        }}
+                    >
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            ) : (
+                role === "Student" ? (
+                    hasPreviousData ? (
+                        <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-center gap-4'
+                            style={{
+                                height: "calc(100% - 100px)",
+                                overflowY: "auto",
+                            }}
+                        >
+                            <div className='w-100 d-flex flex-column justify-content-start align-items-center gap-2'>
+                                <h5 className='mb-0'
+                                    style={{
+                                        fontFamily: "Montserrat Black",
+                                        color: colors.dark
+                                    }}
+                                >
+                                    Comprehensive Analysis
+                                </h5>
+                                <table className="w-75 table align-middle text-center" >
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" style={{ color: colors.dark }}>Score</th>
+                                            <th scope="col" style={{ color: colors.dark }}>Percentage</th>
+                                            <th scope="col" style={{ color: colors.dark }}>Class Average</th>
+                                            <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
+                                            <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>{comprehensiveAnalysis.totalScore}/{comprehensiveAnalysis.totalItems}</td>
+                                            <td>{comprehensiveAnalysis.scorePercentage}</td>
+                                            <td>{comprehensiveAnalysis.classAverage}</td>
+                                            <td>{comprehensiveAnalysis.top30Score}</td>
+                                            <td>{comprehensiveAnalysis.top10Score}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <h5 className='mb-0'
+                                    style={{
+                                        fontFamily: "Montserrat Black",
+                                        color: colors.dark,
+                                    }}
+                                >
+                                    Score Distribution
+                                </h5>
+                                <div className='w-50 d-flex justify-content-center align-items-center'>
+                                    <Radar data={chartData} options={options} />
+                                </div>
+                                <h5 className='mb-0'
+                                    style={{
+                                        fontFamily: "Montserrat Black",
+                                        color: colors.dark,
+                                    }}
+                                >
+                                    Competency Diagnosis
+                                </h5>
+                                <table className="w-75 table text-center align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" style={{ color: colors.dark }}>Major Category</th>
+                                            <th scope="col" style={{ color: colors.dark }}>Performance Level</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {competencyDiagnosis.map((competencyDiagnosis, index) => (
+                                            <tr key={index}>
+                                                <td>
+                                                    {competencyDiagnosis.major_category === 1 && "Basic Theory"}
+                                                    {competencyDiagnosis.major_category === 2 && "Computer Systems"}
+                                                    {competencyDiagnosis.major_category === 3 && "Technical Elements"}
+                                                    {competencyDiagnosis.major_category === 4 && "Development Techniques"}
+                                                    {competencyDiagnosis.major_category === 5 && "Project Management"}
+                                                    {competencyDiagnosis.major_category === 6 && "Service Management"}
+                                                    {competencyDiagnosis.major_category === 7 && "System Strategy"}
+                                                    {competencyDiagnosis.major_category === 8 && "Management Strategy"}
+                                                    {competencyDiagnosis.major_category === 9 && "Corporate & Legal Affairs"}
+                                                </td>
+                                                <td>
+                                                    {competencyDiagnosis.major_category === 1 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Basic Theory"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Basic Theory"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Basic Theory"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 2 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Computer Systems"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Computer Systems"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Computer Systems"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 3 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Technical Elements"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Technical Elements"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Technical Elements"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 4 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Development Techniques"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Development Techniques"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Development Techniques"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 5 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Project Management"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Project Management"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Project Management"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 6 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Service Management"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Service Management"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Service Management"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 7 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in System Strategy"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in System Strategy"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in System Strategy"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 8 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Management Strategy"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Management Strategy"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Management Strategy"}
+                                                        </span>
+                                                    )}
+                                                    {competencyDiagnosis.major_category === 9 && (
+                                                        <span>
+                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Corporate & Legal Affairs"}
+                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Corporate & Legal Affairs"}
+                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Corporate & Legal Affairs"}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {hasActiveAssessment ? (
+                                <button className='btn btn-primary' onClick={handleContinueAssessmentClick}
+                                    style={{
+                                        color: colors.dark,
+                                        backgroundColor: colors.accent,
+                                        border: "none",
+                                        width: "200px"
+                                    }}>
+                                    Continue Assessment
+                                </button>
+                            ) : (
+                                <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target="#generateAssessmentModal" onClick={handleTakeAssessmentClick}
+                                    style={{
+                                        color: colors.dark,
+                                        backgroundColor: colors.accent,
+                                        border: "none",
+                                        width: "200px"
+                                    }}>
+                                    Take Assessment
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className='w-100 p-4 d-flex flex-column justify-content-center align-items-center gap-2'
+                            style={{
+                                height: "calc(100% - 100px)",
+                                overflowY: "auto",
+                            }}
+                        >
+                            {previousDataLoading ? (
+                                <div className='w-100 d-flex justify-content-center align-items-center'>
                                     <div className="spinner-border" role="status"
                                         style={{
                                             color: colors.accent
@@ -250,22 +607,9 @@ function ClassPage() {
                                         <span className="visually-hidden">Loading...</span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <ClassPageHeader />
-                {role === "Student" ? (
-                    hasPreviousData ? (
-                        null
-                    ) : (
-                        <div className='w-100 p-4 d-flex flex-column justify-content-center align-items-center gap-2'
-                            style={{
-                                height: "calc(100% - 100px)",
-                                overflowY: "auto",
-                            }}
-                        >
-                            <p className='mb-0'>No data found.</p>
+                            ) : (
+                                <p className='mb-0'>No data found.</p>
+                            )}
                             {hasActiveAssessment ? (
                                 <button className='btn btn-primary' onClick={handleContinueAssessmentClick}
                                     style={{
@@ -292,9 +636,9 @@ function ClassPage() {
                 ) : (
                     null
                 )
-                }
-            </div >
-        )
+            )}
+
+        </div >
 
     )
 }

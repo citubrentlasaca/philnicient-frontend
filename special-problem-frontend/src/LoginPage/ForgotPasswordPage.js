@@ -14,6 +14,8 @@ function ForgotPasswordPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordMatchError, setPasswordMatchError] = useState(false)
     const [codeError, setCodeError] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [showModal, setShowModal] = useState(false)
 
     const handleEmailChange = (e) => {
         setEmail(e.target.value)
@@ -57,8 +59,10 @@ function ForgotPasswordPage() {
     const handleResetClick = () => {
         if (password !== confirmPassword) {
             setPasswordMatchError(true)
+            setLoading(false);
         }
         else {
+            setLoading(true);
             axios.post('http://127.0.0.1:5000/api/users/reset-password', {
                 email: email,
                 code: code,
@@ -71,6 +75,7 @@ function ForgotPasswordPage() {
                 .catch(error => {
                     console.error('Error resetting password:', error);
                     setCodeError(true);
+                    setLoading(false);
                 });
         }
     }
@@ -137,8 +142,23 @@ function ForgotPasswordPage() {
                             {passwordMatchError ? <p className='mb-0 text-center' style={{ color: colors.wrong, fontSize: "12px" }}>Passwords do not match.</p> : null}
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Cancel</button>
-                            <button type="button" className="btn btn-primary" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleResetClick}>Reset</button>
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" style={{ width: "100px", height: "40px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Cancel</button>
+
+                            <button type="button" className="btn btn-primary" style={{ width: "100px", height: "40px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleResetClick}>
+                                {loading ? (
+                                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                                        <div className="spinner-border spinner-border-sm" role="status"
+                                            style={{
+                                                color: colors.dark,
+                                            }}
+                                        >
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className='mb-0'>Reset</p>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

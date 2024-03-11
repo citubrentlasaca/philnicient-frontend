@@ -1,7 +1,7 @@
 import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 function HomepageHeader() {
     const navigate = useNavigate();
@@ -11,7 +11,6 @@ function HomepageHeader() {
         navigate('/login');
     }
 
-
     return (
         <div className='w-100 p-4 d-flex flex-row justify-content-between align-items-center'
             style={{
@@ -20,12 +19,14 @@ function HomepageHeader() {
 
             }}
         >
-            <img src={logo} alt="Logo"
-                style={{
-                    height: "50px",
-                    width: "50px"
-                }}
-            />
+            <Link to="/">
+                <img src={logo} alt="Logo"
+                    style={{
+                        height: "50px",
+                        width: "50px"
+                    }}
+                />
+            </Link>
             <button className="btn btn-primary" type="button" onClick={handleLogoutClick}
                 style={{
                     width: "100px",

@@ -1,6 +1,7 @@
 import React from 'react'
 import colors from '../colors';
 import logo from '../Icons/logo.png'
+import { Link } from 'react-router-dom'
 
 function ResultsPageHeader() {
     return (
@@ -12,12 +13,14 @@ function ResultsPageHeader() {
             }}
         >
             <div className='d-flex flex-row justify-content-center align-items-center gap-4'>
-                <img src={logo} alt="Logo"
-                    style={{
-                        height: "50px",
-                        width: "50px"
-                    }}
-                />
+                <Link to='/'>
+                    <img src={logo} alt="Logo"
+                        style={{
+                            height: "50px",
+                            width: "50px"
+                        }}
+                    />
+                </Link>
             </div>
         </div>
     )

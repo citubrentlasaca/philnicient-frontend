@@ -9,6 +9,7 @@ function LoginPage() {
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState(false)
+    const [loading, setLoading] = useState(false)
     const navigate = useNavigate();
 
     const handleUsernameChange = (e) => {
@@ -24,6 +25,7 @@ function LoginPage() {
     }
 
     const handleLogInClick = (e) => {
+        setLoading(true);
         axios.post('http://127.0.0.1:5000/api/users/login', {
             username_or_email: username,
             password: password,
@@ -37,6 +39,7 @@ function LoginPage() {
             .catch(error => {
                 console.error('Error logging in user:', error);
                 setError(true);
+                setLoading(false);
             });
     }
 
@@ -93,13 +96,26 @@ function LoginPage() {
                     <button type="button" className="btn btn-primary" onClick={handleLogInClick}
                         style={{
                             width: "100px",
+                            height: "40px",
                             borderRadius: "10px",
                             backgroundColor: colors.accent,
                             borderColor: colors.accent,
                             color: colors.darkest,
                         }}
                     >
-                        Login
+                        {loading ? (
+                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                                <div className="spinner-border spinner-border-sm" role="status"
+                                    style={{
+                                        color: colors.dark,
+                                    }}
+                                >
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className='mb-0'>Login</p>
+                        )}
                     </button>
                     {error && (
                         <p className='mb-0' style={{ color: colors.wrong, fontSize: "12px" }}>User does not exist.</p>

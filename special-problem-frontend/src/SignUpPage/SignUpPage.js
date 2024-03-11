@@ -14,6 +14,7 @@ function SignUpPage() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [usernameError, setUsernameError] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleFirstNameChange = (event) => {
@@ -47,6 +48,7 @@ function SignUpPage() {
     }
 
     const handleSignUp = () => {
+        setLoading(true);
         axios.post('http://127.0.0.1:5000/api/users', {
             firstname: firstName,
             middlename: middleName,
@@ -63,6 +65,7 @@ function SignUpPage() {
             .catch(error => {
                 console.error('Error creating user:', error);
                 setUsernameError(true);
+                setLoading(false);
             });
     }
 
@@ -145,13 +148,26 @@ function SignUpPage() {
                     <button type="button" className="btn btn-primary" onClick={handleSignUp}
                         style={{
                             width: "100px",
+                            height: "40px",
                             borderRadius: "10px",
                             backgroundColor: colors.accent,
                             borderColor: colors.accent,
                             color: colors.darkest,
                         }}
                     >
-                        Sign Up
+                        {loading ? (
+                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                                <div className="spinner-border spinner-border-sm" role="status"
+                                    style={{
+                                        color: colors.dark,
+                                    }}
+                                >
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className='mb-0'>Sign Up</p>
+                        )}
                     </button>
                 </div>
                 <p className='mb-0'>Already have an account? Log in <Link to="/" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>

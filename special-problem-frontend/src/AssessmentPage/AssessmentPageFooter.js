@@ -7,9 +7,11 @@ import axios from 'axios';
 function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId, classId, studentId }) {
     const [score, setScore] = useState(0);
     const [modelInputs, setModelInputs] = useState([])
+    const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
 
     const handleSubmit = async () => {
+        setLoading(true);
         const categoryToNumber = {
             'Basic Theory': 1,
             'Computer Systems': 2,
@@ -97,13 +99,26 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
                 <button className="btn btn-primary" type="button" onClick={handleSubmit}
                     style={{
                         width: "100px",
+                        height: "40px",
                         borderRadius: "10px",
                         backgroundColor: colors.accent,
                         borderColor: colors.accent,
                         color: colors.darkest,
                     }}
                 >
-                    Submit
+                    {loading ? (
+                        <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                            <div className="spinner-border spinner-border-sm" role="status"
+                                style={{
+                                    color: colors.dark,
+                                }}
+                            >
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="mb-0">Submit</p>
+                    )}
                 </button>
             )}
         </div>
