@@ -16,6 +16,7 @@ function ResultsPage() {
     const [results, setResults] = useState(null);
     const [comprehensiveAnalysis, setComprehensiveAnalysis] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [detailedScoreAnalysis, setDetailedScoreAnalysis] = useState(null);
     const [chartData, setChartData] = useState({
         labels: [
             'Basic Theory',
@@ -32,22 +33,22 @@ function ResultsPage() {
             label: 'My Scoring Rate',
             data: [],
             fill: true,
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgb(255, 99, 132)',
-            pointBackgroundColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(0, 173, 181, 0.2)',
+            borderColor: 'rgb(0, 173, 181)',
+            pointBackgroundColor: 'rgb(0, 173, 181)',
             pointBorderColor: '#fff',
             pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgb(255, 99, 132)'
+            pointHoverBorderColor: 'rgb(0, 173, 181)'
         }, {
             label: 'Average Scoring Rate',
             data: [],
             fill: true,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgb(54, 162, 235)',
-            pointBackgroundColor: 'rgb(54, 162, 235)',
+            backgroundColor: 'rgba(57, 62, 70, 0.2)',
+            borderColor: 'rgb(57, 62, 70)',
+            pointBackgroundColor: 'rgb(57, 62, 70)',
             pointBorderColor: '#fff',
             pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgb(54, 162, 235)'
+            pointHoverBorderColor: 'rgb(57, 62, 70)'
         }]
     });
     const options = {
@@ -105,9 +106,9 @@ function ResultsPage() {
             });
             studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
 
+            const tempModelResultsArray = [];
             const tempAllModelResultsArray = [];
             try {
-                const tempArray = [];
                 const getModelResults = await axios.get('http://127.0.0.1:5000/api/model_results', {
                     headers: {
                         Authorization: `Bearer ${userObject.access_token}`
@@ -116,7 +117,7 @@ function ResultsPage() {
 
                 getModelResults.data.forEach((modelResult) => {
                     if (modelResult.student_id === studentId) {
-                        tempArray.push(modelResult);
+                        tempModelResultsArray.push(modelResult);
                     }
                 });
                 for (const studentIdInClass of studentIdsInClass) {
@@ -126,9 +127,10 @@ function ResultsPage() {
                         }
                     });
                 }
+                tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
                 tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
 
-                for (const model of tempArray) {
+                for (const model of tempModelResultsArray) {
                     try {
                         const updatedResult = updatedResultsData.find(result => result.majorCategory === model.major_category);
                         if (!updatedResult) {
@@ -160,7 +162,7 @@ function ResultsPage() {
             const totalScore = updatedResultsData.reduce((acc, result) => acc + result.score, 0);
             const percentageOfScore = ((totalScore / totalItems) * 100).toFixed(2) + "%";
 
-            const tempArray = [];
+            const tempStudentAssessmentResultArray = [];
             for (const studentId of studentIdsInClass) {
                 try {
                     const studentAssessmentResult = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${studentId}`, {
@@ -168,7 +170,7 @@ function ResultsPage() {
                             Authorization: `Bearer ${userObject.access_token}`
                         }
                     });
-                    tempArray.push(studentAssessmentResult.data);
+                    tempStudentAssessmentResultArray.push(studentAssessmentResult.data);
                 } catch (error) {
                     console.error("Error fetching assessment result for student ID:", studentId, error);
                     continue;
@@ -265,8 +267,45 @@ function ResultsPage() {
                 }
             });
 
+            const calculatePercentage = (total_score, number_of_items) => {
+                return ((total_score / number_of_items) * 100).toFixed(2);
+            };
+            const tempClassAverage = {};
+            tempAllModelResultsArray.forEach((result) => {
+                if (!tempClassAverage[result.major_category]) {
+                    tempClassAverage[result.major_category] = { total_score: 0, count: 0 };
+                }
+                tempClassAverage[result.major_category].total_score += result.total_score;
+                tempClassAverage[result.major_category].count++;
+            });
+            const detailedScoreAnalysis = [];
+            tempModelResultsArray.forEach((result) => {
+                const percentage = calculatePercentage(result.total_score, result.number_of_items);
+                const majorCategory = result.major_category;
+                const classAvg = tempClassAverage[majorCategory] ? (tempClassAverage[majorCategory].total_score / tempClassAverage[majorCategory].count).toFixed(2) : 0;
+                const sortedAllModelResults = tempAllModelResultsArray.filter(item => item.major_category === majorCategory).sort((a, b) => b.total_score - a.total_score);
+                const top30 = sortedAllModelResults.slice(0, Math.ceil(sortedAllModelResults.length * 0.3)).map(item => item.total_score);
+                const top10 = sortedAllModelResults.slice(0, Math.ceil(sortedAllModelResults.length * 0.1)).map(item => item.total_score);
+                detailedScoreAnalysis.push({
+                    majorCategory,
+                    score: result.total_score,
+                    totalItems: result.number_of_items,
+                    percentage,
+                    classAverage: classAvg,
+                    top30: top30[0],
+                    top10: top10[0]
+                });
+            });
+            // console.log("Model Results:")
+            // console.log(tempModelResultsArray);
+            // console.log("All Model Results:");
+            // console.log(tempAllModelResultsArray);
+            // console.log("Detailed Score Analysis: ");
+            // console.log(detailedScoreAnalysis);
+
             setResults(updatedResultsData);
             setComprehensiveAnalysis({ totalScore, percentageOfScore, classAverage, top30Score, top10Score });
+            setDetailedScoreAnalysis(detailedScoreAnalysis);
             setChartData(prevChartData => ({
                 ...prevChartData,
                 datasets: [{
@@ -329,6 +368,48 @@ function ResultsPage() {
                                 <td>{comprehensiveAnalysis.top30Score}</td>
                                 <td>{comprehensiveAnalysis.top10Score}</td>
                             </tr>
+                        </tbody>
+                    </table>
+                    <h5 className='mb-0'
+                        style={{
+                            fontFamily: "Montserrat Black",
+                            color: colors.dark
+                        }}
+                    >
+                        Detailed Score Analysis
+                    </h5>
+                    <table className="w-75 table align-middle text-center" >
+                        <thead>
+                            <tr>
+                                <th scope="col" style={{ color: colors.dark }}>Major Category</th>
+                                <th scope="col" style={{ color: colors.dark }}>My Score / Perfect Score</th>
+                                <th scope="col" style={{ color: colors.dark }}>Percentage</th>
+                                <th scope="col" style={{ color: colors.dark }}>Class Average</th>
+                                <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
+                                <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {detailedScoreAnalysis.map((detailedScoreAnalysis, index) => (
+                                <tr key={index}>
+                                    <td>
+                                        {detailedScoreAnalysis.majorCategory === 1 && "Basic Theory"}
+                                        {detailedScoreAnalysis.majorCategory === 2 && "Computer Systems"}
+                                        {detailedScoreAnalysis.majorCategory === 3 && "Technical Elements"}
+                                        {detailedScoreAnalysis.majorCategory === 4 && "Development Techniques"}
+                                        {detailedScoreAnalysis.majorCategory === 5 && "Project Management"}
+                                        {detailedScoreAnalysis.majorCategory === 6 && "Service Management"}
+                                        {detailedScoreAnalysis.majorCategory === 7 && "System Strategy"}
+                                        {detailedScoreAnalysis.majorCategory === 8 && "Management Strategy"}
+                                        {detailedScoreAnalysis.majorCategory === 9 && "Corporate & Legal Affairs"}
+                                    </td>
+                                    <td>{detailedScoreAnalysis.score}/{detailedScoreAnalysis.totalItems}</td>
+                                    <td>{detailedScoreAnalysis.percentage}%</td>
+                                    <td>{detailedScoreAnalysis.classAverage}</td>
+                                    <td>{detailedScoreAnalysis.top30}</td>
+                                    <td>{detailedScoreAnalysis.top10}</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                     <h5 className='mb-0'
