@@ -95,32 +95,30 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
             >
                 {itemNumber} out of {totalItems}
             </h5>
-            {itemNumber === totalItems && (
-                <button className="btn btn-primary" type="button" onClick={handleSubmit}
-                    style={{
-                        width: "100px",
-                        height: "40px",
-                        borderRadius: "10px",
-                        backgroundColor: colors.accent,
-                        borderColor: colors.accent,
-                        color: colors.darkest,
-                    }}
-                >
-                    {loading ? (
-                        <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                            <div className="spinner-border spinner-border-sm" role="status"
-                                style={{
-                                    color: colors.dark,
-                                }}
-                            >
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
+            <button className="btn btn-primary" type="button" onClick={handleSubmit}
+                style={{
+                    width: "100px",
+                    height: "40px",
+                    borderRadius: "10px",
+                    backgroundColor: colors.accent,
+                    borderColor: colors.accent,
+                    color: colors.darkest,
+                }}
+            >
+                {loading ? (
+                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                        <div className="spinner-border spinner-border-sm" role="status"
+                            style={{
+                                color: colors.dark,
+                            }}
+                        >
+                            <span className="visually-hidden">Loading...</span>
                         </div>
-                    ) : (
-                        <p className="mb-0">Submit</p>
-                    )}
-                </button>
-            )}
+                    </div>
+                ) : (
+                    <p className="mb-0">Submit</p>
+                )}
+            </button>
         </div>
     )
 }

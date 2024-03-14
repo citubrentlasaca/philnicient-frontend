@@ -5,7 +5,8 @@ import { getDocs, collection, query, where } from "firebase/firestore";
 import { firestore } from '../firebaseConfig.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Radar } from 'react-chartjs-2';
+import StudentData from './StudentData.js';
+import { Chart } from 'react-chartjs-2';
 
 function ClassPage() {
     const userDataString = sessionStorage.getItem('userData');
@@ -13,7 +14,6 @@ function ClassPage() {
     const userData = userObject.user;
     const [role, setRole] = useState(userData.role)
     const [loading, setLoading] = useState(true)
-    const [classCode, setClassCode] = useState('')
     const [hasPreviousData, setHasPreviousData] = useState(false)
     const [hasActiveAssessment, setHasActiveAssessment] = useState(false)
     const [questions, setQuestions] = useState([]);
@@ -33,7 +33,7 @@ function ClassPage() {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [selectedStudentLoading, setSelectedStudentLoading] = useState(true);
     const [hasCopied, setHasCopied] = useState(false);
-    const [chartData, setChartData] = useState({
+    const [scoreDistribution, setScoreDistribution] = useState({
         labels: [
             'Basic Theory',
             'Computer Systems',
@@ -67,6 +67,24 @@ function ClassPage() {
             pointHoverBorderColor: 'rgb(57, 62, 70)'
         }]
     });
+    const [competencyDistribution, setCompetencyDistribution] = useState({
+        labels: [
+            'Understand',
+            'Does not understand',
+            'Misconception',
+        ],
+        datasets: [{
+            label: 'Student Count Per Competency',
+            data: [],
+            fill: true,
+            backgroundColor: 'rgba(0, 173, 181, 0.2)',
+            borderColor: 'rgb(0, 173, 181)',
+            pointBackgroundColor: 'rgb(0, 173, 181)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(0, 173, 181)'
+        }]
+    });
     const options = {
         scale: {
             type: 'radialLinear',
@@ -74,6 +92,17 @@ function ClassPage() {
                 min: 0,
                 max: 100,
                 beginAtZero: true
+            }
+        }
+    };
+    const chartOptions = {
+        type: 'bar',
+        data: competencyDistribution,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
             }
         }
     };
@@ -266,7 +295,7 @@ function ClassPage() {
                     top10Score: top10Score
                 });
                 setDetailedScoreAnalysis(detailedScoreAnalysis);
-                setChartData(prevChartData => ({
+                setScoreDistribution(prevChartData => ({
                     ...prevChartData,
                     datasets: [{
                         ...prevChartData.datasets[0],
@@ -339,22 +368,6 @@ function ClassPage() {
         }
         else {
             fetchTeacherData();
-        }
-    }, []);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const classResponse = await axios.get(`http://127.0.0.1:5000/api/classes/${classId}`);
-
-                setClassCode(classResponse.data.classcode);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
-
-        if (role === "Teacher") {
-            fetchData();
         }
     }, []);
 
@@ -544,6 +557,7 @@ function ClassPage() {
             }
             tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
             tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
+            console.log(tempAllModelResultsArray)
 
             let totalClassScore = 0;
             const studentScores = [];
@@ -630,7 +644,7 @@ function ClassPage() {
                 top10Score: top10Score
             });
             setDetailedScoreAnalysis(detailedScoreAnalysis);
-            setChartData(prevChartData => ({
+            setScoreDistribution(prevChartData => ({
                 ...prevChartData,
                 datasets: [{
                     ...prevChartData.datasets[0],
@@ -655,15 +669,80 @@ function ClassPage() {
         setStudentDataLoading(true);
     }
 
-    const copyClassCode = () => {
-        const textarea = document.createElement('textarea');
-        textarea.value = classCode;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        setHasCopied(true);
+    const copyClassCode = async () => {
+        try {
+            const classResponse = await axios.get(`http://127.0.0.1:5000/api/classes/${classId}`);
+            const textarea = document.createElement('textarea');
+            textarea.value = classResponse.data.classcode;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            setHasCopied(true);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
     };
+
+    const handleMajorCategoryChange = async (event) => {
+        try {
+            const selectedValue = parseInt(event.target.value);
+            const studentIdsInClass = [];
+            const tempAllModelResultsArray = [];
+
+            const studentsInClassResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                headers: {
+                    Authorization: `Bearer ${userObject.access_token}`
+                }
+            });
+            studentsInClassResponse.data.forEach(student => studentIdsInClass.push(student.id));
+
+            const getModelResultsResponse = await axios.get('http://127.0.0.1:5000/api/model_results', {
+                headers: {
+                    Authorization: `Bearer ${userObject.access_token}`
+                }
+            });
+
+            for (const studentId of studentIdsInClass) {
+                getModelResultsResponse.data.forEach((modelResult) => {
+                    if (modelResult.student_id === studentId) {
+                        tempAllModelResultsArray.push(modelResult);
+                    }
+                });
+            }
+
+            tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
+
+            let understandCount = 0;
+            let notUnderstandCount = 0;
+            let misconceptionCount = 0;
+
+            tempAllModelResultsArray.forEach(result => {
+                if (result.major_category === selectedValue) {
+                    if (result.cri_criteria === "Understand") {
+                        understandCount++;
+                    } else if (result.cri_criteria === "Does not understand") {
+                        notUnderstandCount++;
+                    } else if (result.cri_criteria === "Misconception") {
+                        misconceptionCount++;
+                    }
+                }
+            });
+
+            const countsArray = [understandCount, notUnderstandCount, misconceptionCount];
+
+            setCompetencyDistribution(prevChartData => ({
+                ...prevChartData,
+                datasets: [{
+                    ...prevChartData.datasets[0],
+                    data: countsArray
+                }]
+            }));
+        }
+        catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
 
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
@@ -706,187 +785,7 @@ function ClassPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className='w-100 d-flex flex-column justify-content-start align-items-center gap-2'>
-                                    <h5 className='mb-0'
-                                        style={{
-                                            fontFamily: "Montserrat Black",
-                                            color: colors.dark
-                                        }}
-                                    >
-                                        Comprehensive Analysis
-                                    </h5>
-                                    <table className="w-75 table align-middle text-center" >
-                                        <thead>
-                                            <tr>
-                                                <th scope="col" style={{ color: colors.dark }}>Score</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Percentage</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Class Average</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>{comprehensiveAnalysis.totalScore}/{comprehensiveAnalysis.totalItems}</td>
-                                                <td>{comprehensiveAnalysis.scorePercentage}</td>
-                                                <td>{comprehensiveAnalysis.classAverage}</td>
-                                                <td>{comprehensiveAnalysis.top30Score}</td>
-                                                <td>{comprehensiveAnalysis.top10Score}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                    <h5 className='mb-0'
-                                        style={{
-                                            fontFamily: "Montserrat Black",
-                                            color: colors.dark
-                                        }}
-                                    >
-                                        Detailed Score Analysis
-                                    </h5>
-                                    <table className="w-75 table align-middle text-center" >
-                                        <thead>
-                                            <tr>
-                                                <th scope="col" style={{ color: colors.dark }}>Major Category</th>
-                                                <th scope="col" style={{ color: colors.dark }}>My Score / Perfect Score</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Percentage</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Class Average</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {detailedScoreAnalysis.map((detailedScoreAnalysis, index) => (
-                                                <tr key={index}>
-                                                    <td>
-                                                        {detailedScoreAnalysis.majorCategory === 1 && "Basic Theory"}
-                                                        {detailedScoreAnalysis.majorCategory === 2 && "Computer Systems"}
-                                                        {detailedScoreAnalysis.majorCategory === 3 && "Technical Elements"}
-                                                        {detailedScoreAnalysis.majorCategory === 4 && "Development Techniques"}
-                                                        {detailedScoreAnalysis.majorCategory === 5 && "Project Management"}
-                                                        {detailedScoreAnalysis.majorCategory === 6 && "Service Management"}
-                                                        {detailedScoreAnalysis.majorCategory === 7 && "System Strategy"}
-                                                        {detailedScoreAnalysis.majorCategory === 8 && "Management Strategy"}
-                                                        {detailedScoreAnalysis.majorCategory === 9 && "Corporate & Legal Affairs"}
-                                                    </td>
-                                                    <td>{detailedScoreAnalysis.score}/{detailedScoreAnalysis.totalItems}</td>
-                                                    <td>{detailedScoreAnalysis.percentage}%</td>
-                                                    <td>{detailedScoreAnalysis.classAverage}</td>
-                                                    <td>{detailedScoreAnalysis.top30}</td>
-                                                    <td>{detailedScoreAnalysis.top10}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                    <h5 className='mb-0'
-                                        style={{
-                                            fontFamily: "Montserrat Black",
-                                            color: colors.dark,
-                                        }}
-                                    >
-                                        Score Distribution
-                                    </h5>
-                                    <div className='w-50 d-flex justify-content-center align-items-center'>
-                                        <Radar data={chartData} options={options} />
-                                    </div>
-                                    <h5 className='mb-0'
-                                        style={{
-                                            fontFamily: "Montserrat Black",
-                                            color: colors.dark,
-                                        }}
-                                    >
-                                        Competency Diagnosis
-                                    </h5>
-                                    <table className="w-75 table text-center align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col" style={{ color: colors.dark }}>Major Category</th>
-                                                <th scope="col" style={{ color: colors.dark }}>Performance Level</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {competencyDiagnosis.map((competencyDiagnosis, index) => (
-                                                <tr key={index}>
-                                                    <td>
-                                                        {competencyDiagnosis.major_category === 1 && "Basic Theory"}
-                                                        {competencyDiagnosis.major_category === 2 && "Computer Systems"}
-                                                        {competencyDiagnosis.major_category === 3 && "Technical Elements"}
-                                                        {competencyDiagnosis.major_category === 4 && "Development Techniques"}
-                                                        {competencyDiagnosis.major_category === 5 && "Project Management"}
-                                                        {competencyDiagnosis.major_category === 6 && "Service Management"}
-                                                        {competencyDiagnosis.major_category === 7 && "System Strategy"}
-                                                        {competencyDiagnosis.major_category === 8 && "Management Strategy"}
-                                                        {competencyDiagnosis.major_category === 9 && "Corporate & Legal Affairs"}
-                                                    </td>
-                                                    <td>
-                                                        {competencyDiagnosis.major_category === 1 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Basic Theory"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Basic Theory"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Basic Theory"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 2 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Computer Systems"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Computer Systems"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Computer Systems"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 3 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Technical Elements"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Technical Elements"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Technical Elements"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 4 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Development Techniques"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Development Techniques"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Development Techniques"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 5 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Project Management"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Project Management"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Project Management"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 6 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Service Management"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Service Management"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Service Management"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 7 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in System Strategy"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in System Strategy"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in System Strategy"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 8 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Management Strategy"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Management Strategy"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Management Strategy"}
-                                                            </span>
-                                                        )}
-                                                        {competencyDiagnosis.major_category === 9 && (
-                                                            <span>
-                                                                {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Corporate & Legal Affairs"}
-                                                                {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Corporate & Legal Affairs"}
-                                                                {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Corporate & Legal Affairs"}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <StudentData comprehensiveAnalysis={comprehensiveAnalysis} detailedScoreAnalysis={detailedScoreAnalysis} scoreDistribution={scoreDistribution} options={options} competencyDiagnosis={competencyDiagnosis} />
                             )}
                         </div>
                     </div>
@@ -912,187 +811,7 @@ function ClassPage() {
                                 overflowY: "auto",
                             }}
                         >
-                            <div className='w-100 d-flex flex-column justify-content-start align-items-center gap-2'>
-                                <h5 className='mb-0'
-                                    style={{
-                                        fontFamily: "Montserrat Black",
-                                        color: colors.dark
-                                    }}
-                                >
-                                    Comprehensive Analysis
-                                </h5>
-                                <table className="w-75 table align-middle text-center" >
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" style={{ color: colors.dark }}>Score</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Percentage</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Class Average</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>{comprehensiveAnalysis.totalScore}/{comprehensiveAnalysis.totalItems}</td>
-                                            <td>{comprehensiveAnalysis.scorePercentage}</td>
-                                            <td>{comprehensiveAnalysis.classAverage}</td>
-                                            <td>{comprehensiveAnalysis.top30Score}</td>
-                                            <td>{comprehensiveAnalysis.top10Score}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <h5 className='mb-0'
-                                    style={{
-                                        fontFamily: "Montserrat Black",
-                                        color: colors.dark
-                                    }}
-                                >
-                                    Detailed Score Analysis
-                                </h5>
-                                <table className="w-75 table align-middle text-center" >
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" style={{ color: colors.dark }}>Major Category</th>
-                                            <th scope="col" style={{ color: colors.dark }}>My Score / Perfect Score</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Percentage</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Class Average</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {detailedScoreAnalysis.map((detailedScoreAnalysis, index) => (
-                                            <tr key={index}>
-                                                <td>
-                                                    {detailedScoreAnalysis.majorCategory === 1 && "Basic Theory"}
-                                                    {detailedScoreAnalysis.majorCategory === 2 && "Computer Systems"}
-                                                    {detailedScoreAnalysis.majorCategory === 3 && "Technical Elements"}
-                                                    {detailedScoreAnalysis.majorCategory === 4 && "Development Techniques"}
-                                                    {detailedScoreAnalysis.majorCategory === 5 && "Project Management"}
-                                                    {detailedScoreAnalysis.majorCategory === 6 && "Service Management"}
-                                                    {detailedScoreAnalysis.majorCategory === 7 && "System Strategy"}
-                                                    {detailedScoreAnalysis.majorCategory === 8 && "Management Strategy"}
-                                                    {detailedScoreAnalysis.majorCategory === 9 && "Corporate & Legal Affairs"}
-                                                </td>
-                                                <td>{detailedScoreAnalysis.score}/{detailedScoreAnalysis.totalItems}</td>
-                                                <td>{detailedScoreAnalysis.percentage}%</td>
-                                                <td>{detailedScoreAnalysis.classAverage}</td>
-                                                <td>{detailedScoreAnalysis.top30}</td>
-                                                <td>{detailedScoreAnalysis.top10}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                <h5 className='mb-0'
-                                    style={{
-                                        fontFamily: "Montserrat Black",
-                                        color: colors.dark,
-                                    }}
-                                >
-                                    Score Distribution
-                                </h5>
-                                <div className='w-50 d-flex justify-content-center align-items-center'>
-                                    <Radar data={chartData} options={options} />
-                                </div>
-                                <h5 className='mb-0'
-                                    style={{
-                                        fontFamily: "Montserrat Black",
-                                        color: colors.dark,
-                                    }}
-                                >
-                                    Competency Diagnosis
-                                </h5>
-                                <table className="w-75 table text-center align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" style={{ color: colors.dark }}>Major Category</th>
-                                            <th scope="col" style={{ color: colors.dark }}>Performance Level</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {competencyDiagnosis.map((competencyDiagnosis, index) => (
-                                            <tr key={index}>
-                                                <td>
-                                                    {competencyDiagnosis.major_category === 1 && "Basic Theory"}
-                                                    {competencyDiagnosis.major_category === 2 && "Computer Systems"}
-                                                    {competencyDiagnosis.major_category === 3 && "Technical Elements"}
-                                                    {competencyDiagnosis.major_category === 4 && "Development Techniques"}
-                                                    {competencyDiagnosis.major_category === 5 && "Project Management"}
-                                                    {competencyDiagnosis.major_category === 6 && "Service Management"}
-                                                    {competencyDiagnosis.major_category === 7 && "System Strategy"}
-                                                    {competencyDiagnosis.major_category === 8 && "Management Strategy"}
-                                                    {competencyDiagnosis.major_category === 9 && "Corporate & Legal Affairs"}
-                                                </td>
-                                                <td>
-                                                    {competencyDiagnosis.major_category === 1 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Basic Theory"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Basic Theory"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Basic Theory"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 2 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Computer Systems"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Computer Systems"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Computer Systems"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 3 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Technical Elements"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Technical Elements"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Technical Elements"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 4 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Development Techniques"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Development Techniques"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Development Techniques"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 5 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Project Management"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Project Management"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Project Management"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 6 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Service Management"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Service Management"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Service Management"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 7 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in System Strategy"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in System Strategy"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in System Strategy"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 8 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Management Strategy"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Management Strategy"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Management Strategy"}
-                                                        </span>
-                                                    )}
-                                                    {competencyDiagnosis.major_category === 9 && (
-                                                        <span>
-                                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Corporate & Legal Affairs"}
-                                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Corporate & Legal Affairs"}
-                                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Corporate & Legal Affairs"}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <StudentData comprehensiveAnalysis={comprehensiveAnalysis} detailedScoreAnalysis={detailedScoreAnalysis} scoreDistribution={scoreDistribution} options={options} competencyDiagnosis={competencyDiagnosis} />
                             {hasActiveAssessment ? (
                                 <button className='btn btn-primary' onClick={handleContinueAssessmentClick}
                                     style={{
@@ -1160,61 +879,87 @@ function ClassPage() {
                     )
                 ) : (
                     hasTeacherData ? (
-                        <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-center gap-4'
+                        <div className='w-100 h-100 p-4 d-flex flex-column justify-content-start align-items-center gap-4'
                             style={{
-                                height: "calc(100% - 100px)",
                                 overflowY: "auto",
                             }}
                         >
-                            <h5 className='mb-0'
-                                style={{
-                                    fontFamily: "Montserrat Black",
-                                    color: colors.dark
-                                }}
-                            >
-                                Overall Leaderboard
-                            </h5>
-                            <div className='w-50 p-4 d-flex flex-column justify-content-start align-items-center gap-4 rounded'
-                                style={{
-                                    maxHeight: "100%",
-                                    overflowY: "auto",
-                                    backgroundColor: colors.darkest
-                                }}
-                            >
-                                {overallLeaderboardLoading ? (
-                                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                        <div className="spinner-border" role="status"
-                                            style={{
-                                                color: colors.accent
-                                            }}
-                                        >
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    teacherData.map((student, index) => (
-                                        <div className='w-100 d-flex flex-row justify-content-center align-items-center gap-4' key={index}>
-                                            <h1 className='mb-0 text-center'
+                            <div className='w-50 h-100 d-flex flex-column justify-content-start align-items-center gap-2'>
+                                <h3 className='mb-0'
+                                    style={{
+                                        fontFamily: "Montserrat Black",
+                                        color: colors.dark
+                                    }}
+                                >
+                                    Leaderboard
+                                </h3>
+                                <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-center gap-4 rounded'
+                                    style={{
+                                        maxHeight: "100%",
+                                        overflowY: "auto",
+                                        backgroundColor: colors.darkest
+                                    }}
+                                >
+                                    {overallLeaderboardLoading ? (
+                                        <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
+                                            <div className="spinner-border" role="status"
                                                 style={{
-                                                    fontFamily: "Montserrat Black",
-                                                    color: colors.accent,
-                                                    width: "10%"
+                                                    color: colors.accent
                                                 }}
                                             >
-                                                {index + 1}
-                                            </h1>
-                                            <div className='p-4 d-flex flex-row justify-content-between align-items-center rounded' data-bs-toggle="modal" data-bs-target="#studentDataModal" onClick={() => handleStudentClick(student.studentId, student.studentName)}
-                                                style={{
-                                                    backgroundColor: colors.accent,
-                                                    width: "90%"
-                                                }}
-                                            >
-                                                <b>{student.studentName}</b>
-                                                <b>{student.totalScore}</b>
+                                                <span className="visually-hidden">Loading...</span>
                                             </div>
                                         </div>
-                                    ))
-                                )}
+                                    ) : (
+                                        teacherData.map((student, index) => (
+                                            <div className='w-100 d-flex flex-row justify-content-center align-items-center gap-4' key={index}>
+                                                <h1 className='mb-0 text-center'
+                                                    style={{
+                                                        fontFamily: "Montserrat Black",
+                                                        color: colors.accent,
+                                                        width: "10%"
+                                                    }}
+                                                >
+                                                    {index + 1}
+                                                </h1>
+                                                <div className='p-4 d-flex flex-row justify-content-between align-items-center rounded' data-bs-toggle="modal" data-bs-target="#studentDataModal" onClick={() => handleStudentClick(student.studentId, student.studentName)}
+                                                    style={{
+                                                        backgroundColor: colors.accent,
+                                                        width: "90%"
+                                                    }}
+                                                >
+                                                    <b>{student.studentName}</b>
+                                                    <b>{student.totalScore}</b>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                            <div className='w-50 d-flex flex-column justify-content-center align-items-center gap-2'>
+                                <h3 className='mb-0'
+                                    style={{
+                                        fontFamily: "Montserrat Black",
+                                        color: colors.dark,
+                                    }}
+                                >
+                                    Competency Distribution
+                                </h3>
+                                <select className="form-select" defaultValue="Placeholder" onChange={handleMajorCategoryChange}>
+                                    <option value="Placeholder" disabled>Select a major category</option>
+                                    <option value="1">Basic Theory</option>
+                                    <option value="2">Computer Systems</option>
+                                    <option value="3">Technical Elements</option>
+                                    <option value="4">Development Techniques</option>
+                                    <option value="5">Project Management</option>
+                                    <option value="6">Service Management</option>
+                                    <option value="7">System Strategy</option>
+                                    <option value="8">Management Strategy</option>
+                                    <option value="9">Corporate & Legal Affairs</option>
+                                </select>
+                                <div className='w-100 d-flex justify-content-center align-items-center'>
+                                    <Chart type='bar' data={competencyDistribution} options={chartOptions} />
+                                </div>
                             </div>
                             <button className='btn btn-primary' onClick={copyClassCode}
                                 style={{
@@ -1225,7 +970,7 @@ function ClassPage() {
                                     width: "200px"
                                 }}>
                                 {hasCopied ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill={colors.dark} class="bi bi-clipboard-check" viewBox="0 0 16 16">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill={colors.dark} className="bi bi-clipboard-check" viewBox="0 0 16 16">
                                         <path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0" />
                                         <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
                                         <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
@@ -1264,7 +1009,7 @@ function ClassPage() {
                                             width: "200px"
                                         }}>
                                         {hasCopied ? (
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill={colors.dark} class="bi bi-clipboard-check" viewBox="0 0 16 16">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill={colors.dark} className="bi bi-clipboard-check" viewBox="0 0 16 16">
                                                 <path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0" />
                                                 <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
                                                 <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
@@ -1277,7 +1022,6 @@ function ClassPage() {
                             )}
                         </div>
                     )
-
                 )
             )}
         </div >

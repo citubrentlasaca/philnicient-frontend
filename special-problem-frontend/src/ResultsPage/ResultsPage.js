@@ -17,7 +17,7 @@ function ResultsPage() {
     const [comprehensiveAnalysis, setComprehensiveAnalysis] = useState(null);
     const [loading, setLoading] = useState(true);
     const [detailedScoreAnalysis, setDetailedScoreAnalysis] = useState(null);
-    const [chartData, setChartData] = useState({
+    const [scoreDistribution, setScoreDistribution] = useState({
         labels: [
             'Basic Theory',
             'Computer Systems',
@@ -296,17 +296,11 @@ function ResultsPage() {
                     top10: top10[0]
                 });
             });
-            // console.log("Model Results:")
-            // console.log(tempModelResultsArray);
-            // console.log("All Model Results:");
-            // console.log(tempAllModelResultsArray);
-            // console.log("Detailed Score Analysis: ");
-            // console.log(detailedScoreAnalysis);
 
             setResults(updatedResultsData);
             setComprehensiveAnalysis({ totalScore, percentageOfScore, classAverage, top30Score, top10Score });
             setDetailedScoreAnalysis(detailedScoreAnalysis);
-            setChartData(prevChartData => ({
+            setScoreDistribution(prevChartData => ({
                 ...prevChartData,
                 datasets: [{
                     ...prevChartData.datasets[0],
@@ -320,7 +314,7 @@ function ResultsPage() {
         };
 
         fetchData();
-    }, [modelInputsData]);
+    }, []);
 
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
@@ -342,185 +336,193 @@ function ResultsPage() {
                         overflowY: "auto",
                     }}
                 >
-                    <h5 className='mb-0'
-                        style={{
-                            fontFamily: "Montserrat Black",
-                            color: colors.dark
-                        }}
-                    >
-                        Comprehensive Analysis
-                    </h5>
-                    <table className="w-75 table align-middle text-center" >
-                        <thead>
-                            <tr>
-                                <th scope="col" style={{ color: colors.dark }}>Score</th>
-                                <th scope="col" style={{ color: colors.dark }}>Percentage</th>
-                                <th scope="col" style={{ color: colors.dark }}>Class Average</th>
-                                <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
-                                <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>{comprehensiveAnalysis.totalScore}/{totalItems}</td>
-                                <td>{comprehensiveAnalysis.percentageOfScore}</td>
-                                <td>{comprehensiveAnalysis.classAverage}</td>
-                                <td>{comprehensiveAnalysis.top30Score}</td>
-                                <td>{comprehensiveAnalysis.top10Score}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <h5 className='mb-0'
-                        style={{
-                            fontFamily: "Montserrat Black",
-                            color: colors.dark
-                        }}
-                    >
-                        Detailed Score Analysis
-                    </h5>
-                    <table className="w-75 table align-middle text-center" >
-                        <thead>
-                            <tr>
-                                <th scope="col" style={{ color: colors.dark }}>Major Category</th>
-                                <th scope="col" style={{ color: colors.dark }}>My Score / Perfect Score</th>
-                                <th scope="col" style={{ color: colors.dark }}>Percentage</th>
-                                <th scope="col" style={{ color: colors.dark }}>Class Average</th>
-                                <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
-                                <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {detailedScoreAnalysis.map((detailedScoreAnalysis, index) => (
-                                <tr key={index}>
-                                    <td>
-                                        {detailedScoreAnalysis.majorCategory === 1 && "Basic Theory"}
-                                        {detailedScoreAnalysis.majorCategory === 2 && "Computer Systems"}
-                                        {detailedScoreAnalysis.majorCategory === 3 && "Technical Elements"}
-                                        {detailedScoreAnalysis.majorCategory === 4 && "Development Techniques"}
-                                        {detailedScoreAnalysis.majorCategory === 5 && "Project Management"}
-                                        {detailedScoreAnalysis.majorCategory === 6 && "Service Management"}
-                                        {detailedScoreAnalysis.majorCategory === 7 && "System Strategy"}
-                                        {detailedScoreAnalysis.majorCategory === 8 && "Management Strategy"}
-                                        {detailedScoreAnalysis.majorCategory === 9 && "Corporate & Legal Affairs"}
-                                    </td>
-                                    <td>{detailedScoreAnalysis.score}/{detailedScoreAnalysis.totalItems}</td>
-                                    <td>{detailedScoreAnalysis.percentage}%</td>
-                                    <td>{detailedScoreAnalysis.classAverage}</td>
-                                    <td>{detailedScoreAnalysis.top30}</td>
-                                    <td>{detailedScoreAnalysis.top10}</td>
+                    <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
+                        <h3 className='mb-0'
+                            style={{
+                                fontFamily: "Montserrat Black",
+                                color: colors.dark
+                            }}
+                        >
+                            Comprehensive Analysis
+                        </h3>
+                        <table className="w-75 table align-middle text-center" >
+                            <thead>
+                                <tr>
+                                    <th scope="col" style={{ color: colors.dark }}>Score</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Percentage</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Class Average</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <h5 className='mb-0'
-                        style={{
-                            fontFamily: "Montserrat Black",
-                            color: colors.dark,
-                        }}
-                    >
-                        Score Distribution
-                    </h5>
-                    <div className='w-50 d-flex justify-content-center align-items-center'>
-                        <Radar data={chartData} options={options} />
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{comprehensiveAnalysis.totalScore}/{totalItems}</td>
+                                    <td>{comprehensiveAnalysis.percentageOfScore}</td>
+                                    <td>{comprehensiveAnalysis.classAverage}</td>
+                                    <td>{comprehensiveAnalysis.top30Score}</td>
+                                    <td>{comprehensiveAnalysis.top10Score}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <h5 className='mb-0'
-                        style={{
-                            fontFamily: "Montserrat Black",
-                            color: colors.dark,
-                        }}
-                    >
-                        Competency Diagnosis
-                    </h5>
-                    <table className="w-75 table text-center align-middle">
-                        <thead>
-                            <tr>
-                                <th scope="col" style={{ color: colors.dark }}>Major Category</th>
-                                <th scope="col" style={{ color: colors.dark }}>Performance Level</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {results.map((result, index) => (
-                                <tr key={index}>
-                                    <td>
-                                        {result.majorCategory === 1 && "Basic Theory"}
-                                        {result.majorCategory === 2 && "Computer Systems"}
-                                        {result.majorCategory === 3 && "Technical Elements"}
-                                        {result.majorCategory === 4 && "Development Techniques"}
-                                        {result.majorCategory === 5 && "Project Management"}
-                                        {result.majorCategory === 6 && "Service Management"}
-                                        {result.majorCategory === 7 && "System Strategy"}
-                                        {result.majorCategory === 8 && "Management Strategy"}
-                                        {result.majorCategory === 9 && "Corporate & Legal Affairs"}
-                                    </td>
-                                    <td>
-                                        {result.majorCategory === 1 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Basic Theory"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Basic Theory"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Basic Theory"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 2 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Computer Systems"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Computer Systems"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Computer Systems"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 3 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Technical Elements"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Technical Elements"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Technical Elements"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 4 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Development Techniques"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Development Techniques"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Development Techniques"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 5 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Project Management"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Project Management"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Project Management"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 6 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Service Management"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Service Management"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Service Management"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 7 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in System Strategy"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in System Strategy"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in System Strategy"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 8 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Management Strategy"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Management Strategy"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Management Strategy"}
-                                            </span>
-                                        )}
-                                        {result.majorCategory === 9 && (
-                                            <span>
-                                                {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Corporate & Legal Affairs"}
-                                                {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Corporate & Legal Affairs"}
-                                                {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Corporate & Legal Affairs"}
-                                            </span>
-                                        )}
-                                    </td>
+                    <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
+                        <h3 className='mb-0'
+                            style={{
+                                fontFamily: "Montserrat Black",
+                                color: colors.dark
+                            }}
+                        >
+                            Detailed Score Analysis
+                        </h3>
+                        <table className="w-75 table align-middle text-center" >
+                            <thead>
+                                <tr>
+                                    <th scope="col" style={{ color: colors.dark }}>Major Category</th>
+                                    <th scope="col" style={{ color: colors.dark }}>My Score / Perfect Score</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Percentage</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Class Average</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Top 30%</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Top 10%</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {detailedScoreAnalysis.map((detailedScoreAnalysis, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            {detailedScoreAnalysis.majorCategory === 1 && "Basic Theory"}
+                                            {detailedScoreAnalysis.majorCategory === 2 && "Computer Systems"}
+                                            {detailedScoreAnalysis.majorCategory === 3 && "Technical Elements"}
+                                            {detailedScoreAnalysis.majorCategory === 4 && "Development Techniques"}
+                                            {detailedScoreAnalysis.majorCategory === 5 && "Project Management"}
+                                            {detailedScoreAnalysis.majorCategory === 6 && "Service Management"}
+                                            {detailedScoreAnalysis.majorCategory === 7 && "System Strategy"}
+                                            {detailedScoreAnalysis.majorCategory === 8 && "Management Strategy"}
+                                            {detailedScoreAnalysis.majorCategory === 9 && "Corporate & Legal Affairs"}
+                                        </td>
+                                        <td>{detailedScoreAnalysis.score}/{detailedScoreAnalysis.totalItems}</td>
+                                        <td>{detailedScoreAnalysis.percentage}%</td>
+                                        <td>{detailedScoreAnalysis.classAverage}</td>
+                                        <td>{detailedScoreAnalysis.top30}</td>
+                                        <td>{detailedScoreAnalysis.top10}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
+                        <h3 className='mb-0'
+                            style={{
+                                fontFamily: "Montserrat Black",
+                                color: colors.dark,
+                            }}
+                        >
+                            Score Distribution
+                        </h3>
+                        <div className='w-50 d-flex justify-content-center align-items-center'>
+                            <Radar data={scoreDistribution} options={options} />
+                        </div>
+                    </div>
+                    <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
+                        <h3 className='mb-0'
+                            style={{
+                                fontFamily: "Montserrat Black",
+                                color: colors.dark,
+                            }}
+                        >
+                            Competency Diagnosis
+                        </h3>
+                        <table className="w-75 table text-center align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style={{ color: colors.dark }}>Major Category</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Proficiency Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {results.map((result, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            {result.majorCategory === 1 && "Basic Theory"}
+                                            {result.majorCategory === 2 && "Computer Systems"}
+                                            {result.majorCategory === 3 && "Technical Elements"}
+                                            {result.majorCategory === 4 && "Development Techniques"}
+                                            {result.majorCategory === 5 && "Project Management"}
+                                            {result.majorCategory === 6 && "Service Management"}
+                                            {result.majorCategory === 7 && "System Strategy"}
+                                            {result.majorCategory === 8 && "Management Strategy"}
+                                            {result.majorCategory === 9 && "Corporate & Legal Affairs"}
+                                        </td>
+                                        <td>
+                                            {result.majorCategory === 1 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Basic Theory"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Basic Theory"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Basic Theory"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 2 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Computer Systems"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Computer Systems"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Computer Systems"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 3 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Technical Elements"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Technical Elements"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Technical Elements"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 4 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Development Techniques"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Development Techniques"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Development Techniques"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 5 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Project Management"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Project Management"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Project Management"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 6 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Service Management"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Service Management"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Service Management"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 7 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in System Strategy"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in System Strategy"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in System Strategy"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 8 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Management Strategy"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Management Strategy"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Management Strategy"}
+                                                </span>
+                                            )}
+                                            {result.majorCategory === 9 && (
+                                                <span>
+                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Corporate & Legal Affairs"}
+                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Corporate & Legal Affairs"}
+                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Corporate & Legal Affairs"}
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                     <Link to='/'>
                         <button className='btn btn-primary'
                             style={{
