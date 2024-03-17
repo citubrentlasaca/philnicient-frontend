@@ -19,7 +19,7 @@ function HomepageHeader() {
 
             }}
         >
-            <Link to="/">
+            <Link to="/home">
                 <img src={logo} alt="Logo"
                     style={{
                         height: "50px",

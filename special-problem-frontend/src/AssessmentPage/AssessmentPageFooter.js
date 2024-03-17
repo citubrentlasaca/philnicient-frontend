@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import colors from '../colors'
-import logo from '../Icons/logo.png'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios';
 

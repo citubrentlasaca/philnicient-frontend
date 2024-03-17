@@ -13,7 +13,7 @@ function ResultsPageHeader() {
             }}
         >
             <div className='d-flex flex-row justify-content-center align-items-center gap-4'>
-                <Link to='/'>
+                <Link to='/home'>
                     <img src={logo} alt="Logo"
                         style={{
                             height: "50px",

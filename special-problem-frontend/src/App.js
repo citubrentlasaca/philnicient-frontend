@@ -9,6 +9,7 @@ import SignUpPage from './SignUpPage/SignUpPage.js';
 import Homepage from './Homepage/Homepage.js';
 import ClassPage from './ClassPage/ClassPage.js';
 import ForgotPasswordPage from './LoginPage/ForgotPasswordPage.js';
+import LandingPage from './LandingPage/LandingPage.js';
 
 function App() {
   return (
@@ -19,10 +20,11 @@ function App() {
     >
       <Router>
         <Routes>
+          <Route path='/' element={<LandingPage />} />
           <Route path='/login' element={<LoginPage />} />
           <Route path='/signup' element={<SignUpPage />} />
           <Route path='/forgotpassword' element={<ForgotPasswordPage />} />
-          <Route path='/' element={<PrivateRoute redirectTo="/login" component={Homepage} />} />
+          <Route path='/home' element={<PrivateRoute redirectTo="/login" component={Homepage} />} />
           <Route path='/class/:classId' element={<PrivateRoute redirectTo="/login" component={ClassPage} />} />
           <Route path='/instructions' element={<PrivateRoute redirectTo="/login" component={InstructionsPage} />} />
           <Route path="/assessment/:assessmentId" element={<PrivateRoute redirectTo="/login" component={AssessmentPage} />} />

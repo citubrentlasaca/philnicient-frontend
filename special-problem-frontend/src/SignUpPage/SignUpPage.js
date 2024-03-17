@@ -79,12 +79,14 @@ function SignUpPage() {
                 backgroundColor: colors.darkest,
             }}
         >
-            <img src={logo} alt="Logo"
-                style={{
-                    width: "50px",
-                    height: "50px",
-                }}
-            />
+            <Link to="/">
+                <img src={logo} alt="Logo"
+                    style={{
+                        width: "50px",
+                        height: "50px",
+                    }}
+                />
+            </Link>
             <div className='w-50 p-4 d-flex flex-column justify-content-center align-items-center gap-4 rounded'
                 style={{
                     backgroundColor: colors.light,

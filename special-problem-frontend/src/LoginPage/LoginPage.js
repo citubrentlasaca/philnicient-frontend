@@ -34,7 +34,7 @@ function LoginPage() {
                 const userData = response.data;
                 console.log('User successfully logged in:', userData);
                 sessionStorage.setItem('userData', JSON.stringify(userData))
-                navigate('/');
+                navigate('/home');
             })
             .catch(error => {
                 console.error('Error logging in user:', error);
@@ -56,12 +56,14 @@ function LoginPage() {
                 backgroundColor: colors.darkest,
             }}
         >
-            <img src={logo} alt="Logo"
-                style={{
-                    width: "50px",
-                    height: "50px",
-                }}
-            />
+            <Link to="/">
+                <img src={logo} alt="Logo"
+                    style={{
+                        width: "50px",
+                        height: "50px",
+                    }}
+                />
+            </Link>
             <div className='w-25 p-4 d-flex flex-column justify-content-center align-items-center gap-4 rounded'
                 style={{
                     backgroundColor: colors.light,
