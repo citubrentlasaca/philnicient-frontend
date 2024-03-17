@@ -89,7 +89,8 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
             <h5 className='mb-0'
                 style={{
                     color: colors.accent,
-                    fontFamily: "Montserrat Black",
+                    fontFamily: "Montserrat",
+                    fontWeight: "900",
                 }}
             >
                 {itemNumber} out of {totalItems}

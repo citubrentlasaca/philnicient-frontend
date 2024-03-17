@@ -339,7 +339,8 @@ function ResultsPage() {
                     <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
                         <h3 className='mb-0'
                             style={{
-                                fontFamily: "Montserrat Black",
+                                fontFamily: "Montserrat",
+                                fontWeight: "900",
                                 color: colors.dark
                             }}
                         >
@@ -369,7 +370,8 @@ function ResultsPage() {
                     <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
                         <h3 className='mb-0'
                             style={{
-                                fontFamily: "Montserrat Black",
+                                fontFamily: "Montserrat",
+                                fontWeight: "900",
                                 color: colors.dark
                             }}
                         >
@@ -413,7 +415,8 @@ function ResultsPage() {
                     <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
                         <h3 className='mb-0'
                             style={{
-                                fontFamily: "Montserrat Black",
+                                fontFamily: "Montserrat",
+                                fontWeight: "900",
                                 color: colors.dark,
                             }}
                         >
@@ -426,7 +429,8 @@ function ResultsPage() {
                     <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
                         <h3 className='mb-0'
                             style={{
-                                fontFamily: "Montserrat Black",
+                                fontFamily: "Montserrat",
+                                fontWeight: "900",
                                 color: colors.dark,
                             }}
                         >
