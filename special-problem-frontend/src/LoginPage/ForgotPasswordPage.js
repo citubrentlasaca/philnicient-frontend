@@ -15,7 +15,6 @@ function ForgotPasswordPage() {
     const [passwordMatchError, setPasswordMatchError] = useState(false)
     const [codeError, setCodeError] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [showModal, setShowModal] = useState(false)
 
     const handleEmailChange = (e) => {
         setEmail(e.target.value)

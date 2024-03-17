@@ -1,4 +1,3 @@
-import './App.css';
 import AssessmentPage from './AssessmentPage/AssessmentPage.js';
 import colors from './colors';
 import InstructionsPage from './InstructionsPage/InstructionsPage.js';
