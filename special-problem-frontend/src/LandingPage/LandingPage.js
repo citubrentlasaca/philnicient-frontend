@@ -18,7 +18,8 @@ function LandingPage() {
                     <div className='w-50 d-flex flex-column justify-content-start align-items-start gap-2'>
                         <h1
                             style={{
-                                fontFamily: "Montserrat Black"
+                                fontFamily: "Montserrat",
+                                fontWeight: "900",
                             }}
                         >
                             Master the PhilNITS FE Exam with Philnicient
@@ -50,7 +51,8 @@ function LandingPage() {
                 <div className='w-75 d-flex flex-column justify-content-center align-items-center gap-2'>
                     <h3
                         style={{
-                            fontFamily: "Montserrat Black"
+                            fontFamily: "Montserrat",
+                            fontWeight: "900",
                         }}
                     >
                         What is Philnicient?
@@ -67,7 +69,8 @@ function LandingPage() {
                 <div className='w-75 d-flex flex-column justify-content-center align-items-center gap-2'>
                     <h3
                         style={{
-                            fontFamily: "Montserrat Black"
+                            fontFamily: "Montserrat",
+                            fontWeight: "900",
                         }}
                     >
                         What is the PhilNITS FE Exam?
@@ -83,7 +86,8 @@ function LandingPage() {
                 <div className='w-75 d-flex flex-column justify-content-center align-items-center gap-2'>
                     <h3
                         style={{
-                            fontFamily: "Montserrat Black"
+                            fontFamily: "Montserrat",
+                            fontWeight: "900",
                         }}
                     >
                         Ready to Ace the PhilNITS FE Exam?
