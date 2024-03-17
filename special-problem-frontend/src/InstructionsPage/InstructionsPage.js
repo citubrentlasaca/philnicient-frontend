@@ -35,7 +35,8 @@ function LandingPage() {
             >
                 <h1 className='w-75 mb-0 text-center'
                     style={{
-                        fontFamily: "Montserrat Black",
+                        fontFamily: "Montserrat",
+                        fontWeight: "900",
                         color: colors.dark,
                     }}
                 >

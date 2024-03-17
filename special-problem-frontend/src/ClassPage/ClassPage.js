@@ -886,7 +886,8 @@ function ClassPage() {
                             <div className='w-50 h-100 d-flex flex-column justify-content-start align-items-center gap-2'>
                                 <h3 className='mb-0'
                                     style={{
-                                        fontFamily: "Montserrat Black",
+                                        fontFamily: "Montserrat",
+                                        fontWeight: "900",
                                         color: colors.dark
                                     }}
                                 >
@@ -914,7 +915,8 @@ function ClassPage() {
                                             <div className='w-100 d-flex flex-row justify-content-center align-items-center gap-4' key={index}>
                                                 <h1 className='mb-0 text-center'
                                                     style={{
-                                                        fontFamily: "Montserrat Black",
+                                                        fontFamily: "Montserrat",
+                                                        fontWeight: "900",
                                                         color: colors.accent,
                                                         width: "10%"
                                                     }}
@@ -938,7 +940,8 @@ function ClassPage() {
                             <div className='w-50 d-flex flex-column justify-content-center align-items-center gap-2'>
                                 <h3 className='mb-0'
                                     style={{
-                                        fontFamily: "Montserrat Black",
+                                        fontFamily: "Montserrat",
+                                        fontWeight: "900",
                                         color: colors.dark,
                                     }}
                                 >
