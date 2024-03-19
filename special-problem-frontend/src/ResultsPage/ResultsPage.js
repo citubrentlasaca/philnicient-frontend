@@ -5,6 +5,7 @@ import 'chart.js/auto';
 import { Radar } from 'react-chartjs-2';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import NormalLoading from '../Components/NormalLoading';
 
 function ResultsPage() {
     const userDataString = sessionStorage.getItem('userData');
@@ -320,15 +321,7 @@ function ResultsPage() {
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
             <ResultsPageHeader />
             {loading ? (
-                <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                    <div className="spinner-border" role="status"
-                        style={{
-                            color: colors.accent
-                        }}
-                    >
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+                <NormalLoading />
             ) : (
                 <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-center gap-4'
                     style={{

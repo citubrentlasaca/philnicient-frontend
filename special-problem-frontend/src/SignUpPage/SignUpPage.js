@@ -3,6 +3,7 @@ import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios';
+import SmallLoading from '../Components/SmallLoading';
 
 function SignUpPage() {
     const [firstName, setFirstName] = useState('');
@@ -158,15 +159,7 @@ function SignUpPage() {
                         }}
                     >
                         {loading ? (
-                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                <div className="spinner-border spinner-border-sm" role="status"
-                                    style={{
-                                        color: colors.dark,
-                                    }}
-                                >
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
+                            <SmallLoading />
                         ) : (
                             <p className='mb-0'>Sign Up</p>
                         )}

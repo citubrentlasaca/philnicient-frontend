@@ -3,6 +3,7 @@ import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import SmallLoading from '../Components/SmallLoading'
 
 function ForgotPasswordPage() {
     const navigate = useNavigate();
@@ -145,15 +146,7 @@ function ForgotPasswordPage() {
 
                             <button type="button" className="btn btn-primary" style={{ width: "100px", height: "40px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleResetClick}>
                                 {loading ? (
-                                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                        <div className="spinner-border spinner-border-sm" role="status"
-                                            style={{
-                                                color: colors.dark,
-                                            }}
-                                        >
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                    </div>
+                                    <SmallLoading />
                                 ) : (
                                     <p className='mb-0'>Reset</p>
                                 )}

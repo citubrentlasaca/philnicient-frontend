@@ -3,6 +3,7 @@ import HomepageHeader from './HomepageHeader'
 import colors from '../colors'
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import NormalLoading from '../Components/NormalLoading';
 
 function Homepage() {
     const [loading, setLoading] = useState(true)
@@ -209,15 +210,7 @@ function Homepage() {
             <HomepageHeader />
             {role === 'Teacher' && (
                 loading ? (
-                    <div className='w-100 h-100 d-flex justify-content-center align-items-center' >
-                        <div className="spinner-border" role="status"
-                            style={{
-                                color: colors.accent
-                            }}
-                        >
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
+                    <NormalLoading />
                 ) : (
                     <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-start gap-4'
                         style={{
@@ -281,15 +274,7 @@ function Homepage() {
             {
                 role === 'Student' && (
                     loading ? (
-                        <div className='w-100 h-100 d-flex justify-content-center align-items-center' >
-                            <div className="spinner-border" role="status"
-                                style={{
-                                    color: colors.accent
-                                }}
-                            >
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
+                        <NormalLoading />
                     ) : (
                         <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-start gap-4'
                             style={{
@@ -352,15 +337,7 @@ function Homepage() {
             }
             {role === 'Admin' && (
                 loading ? (
-                    <div className='w-100 h-100 d-flex justify-content-center align-items-center' >
-                        <div className="spinner-border" role="status"
-                            style={{
-                                color: colors.accent
-                            }}
-                        >
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
+                    <NormalLoading />
                 ) : (
                     <div className='w-100 p-4 d-flex flex-column justify-content-start align-items-start gap-4'
                         style={{

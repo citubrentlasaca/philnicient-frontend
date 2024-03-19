@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import StudentData from './StudentData.js';
 import { Chart } from 'react-chartjs-2';
+import NormalLoading from '../Components/NormalLoading.js';
 
 function ClassPage() {
     const userDataString = sessionStorage.getItem('userData');
@@ -792,15 +793,7 @@ function ClassPage() {
             </div>
             <ClassPageHeader />
             {loading ? (
-                <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                    <div className="spinner-border" role="status"
-                        style={{
-                            color: colors.accent
-                        }}
-                    >
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+                <NormalLoading />
             ) : (
                 role === "Student" ? (
                     hasPreviousData ? (
