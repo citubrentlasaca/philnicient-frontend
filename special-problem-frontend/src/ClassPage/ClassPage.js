@@ -403,15 +403,15 @@ function ClassPage() {
                     }));
                 };
 
-                const basictheory = await fetchDocuments("Technology", "Basic Theory", 15);
-                const computersystems = await fetchDocuments("Technology", "Computer Systems", 15);
-                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 20);
-                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 5);
-                const projectmanagement = await fetchDocuments("Management", "Project Management", 5);
-                const servicemanagement = await fetchDocuments("Management", "Service Management", 5);
-                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 5);
-                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 5);
-                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 5);
+                const basictheory = await fetchDocuments("Technology", "Basic Theory", 7);
+                const computersystems = await fetchDocuments("Technology", "Computer Systems", 7);
+                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 7);
+                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 7);
+                const projectmanagement = await fetchDocuments("Management", "Project Management", 7);
+                const servicemanagement = await fetchDocuments("Management", "Service Management", 7);
+                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 7);
+                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 7);
+                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 7);
 
                 const allDocuments = [
                     ...basictheory,
@@ -919,7 +919,8 @@ function ClassPage() {
                                                 <div className='p-4 d-flex flex-row justify-content-between align-items-center rounded' data-bs-toggle="modal" data-bs-target="#studentDataModal" onClick={() => handleStudentClick(student.studentId, student.studentName)}
                                                     style={{
                                                         backgroundColor: colors.accent,
-                                                        width: "90%"
+                                                        width: "90%",
+                                                        cursor: "pointer"
                                                     }}
                                                 >
                                                     <b>{student.studentName}</b>

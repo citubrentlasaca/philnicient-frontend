@@ -11,6 +11,10 @@ import ForgotPasswordPage from './LoginPage/ForgotPasswordPage.js';
 import LandingPage from './LandingPage/LandingPage.js';
 
 function App() {
+  const userDataString = sessionStorage.getItem('userData');
+  const userData = JSON.parse(userDataString);
+  const isLoggedIn = userData?.access_token;
+
   return (
     <div className='vw-100 vh-100'
       style={{
@@ -19,11 +23,10 @@ function App() {
     >
       <Router>
         <Routes>
-          <Route path='/' element={<LandingPage />} />
+          <Route path='/' element={isLoggedIn ? <Homepage /> : <LandingPage />} />
           <Route path='/login' element={<LoginPage />} />
           <Route path='/signup' element={<SignUpPage />} />
           <Route path='/forgotpassword' element={<ForgotPasswordPage />} />
-          <Route path='/home' element={<PrivateRoute redirectTo="/login" component={Homepage} />} />
           <Route path='/class/:classId' element={<PrivateRoute redirectTo="/login" component={ClassPage} />} />
           <Route path='/instructions' element={<PrivateRoute redirectTo="/login" component={InstructionsPage} />} />
           <Route path="/assessment/:assessmentId" element={<PrivateRoute redirectTo="/login" component={AssessmentPage} />} />

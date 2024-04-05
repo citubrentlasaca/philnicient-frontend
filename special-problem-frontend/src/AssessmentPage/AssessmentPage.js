@@ -90,7 +90,6 @@ function AssessmentPage() {
                         }
                     });
                 }
-                console.log('Progress saved successfully');
             } catch (error) {
                 console.error('Error updating questions:', error);
             }

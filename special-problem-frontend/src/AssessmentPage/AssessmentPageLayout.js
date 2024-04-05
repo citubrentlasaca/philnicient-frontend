@@ -6,7 +6,7 @@ import axios from 'axios';
 function AssessmentPageLayout({ children, itemNumber, totalItems, questions, studentAssessmentId, classId, studentId }) {
     const [timeRemaining, setTimeRemaining] = useState({
         hours: 2,
-        minutes: 30,
+        minutes: 0,
         seconds: 0,
     });
 
@@ -20,7 +20,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
                 const assessmentTime = new Date(datetimecreated);
                 const timeDifference = Math.abs(currentTime - assessmentTime);
 
-                const remainingMilliseconds = 2 * 60 * 60 * 1000 + 30 * 60 * 1000 - timeDifference;
+                const remainingMilliseconds = 2 * 60 * 60 * 1000 - timeDifference;
                 const remainingHours = Math.floor(remainingMilliseconds / (1000 * 60 * 60));
                 const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
                 const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);

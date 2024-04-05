@@ -60,7 +60,6 @@ function SignUpPage() {
             role: role
         })
             .then(response => {
-                console.log('User created:', response.data);
                 navigate('/login');
             })
             .catch(error => {

@@ -42,7 +42,6 @@ function Homepage() {
                 const classData = response.data;
                 setClassCode(classData.classcode)
                 setClassCodeLoading(false)
-                console.log('Class successfully created:', classData);
             })
             .catch(error => {
                 console.error('Error creating class:', error);
@@ -59,7 +58,6 @@ function Homepage() {
             .then(response => {
                 const classData = response.data;
                 const classId = classData.id;
-                console.log('Class found:', classData);
 
                 axios.post('http://127.0.0.1:5000/api/students', {
                     class_id: classId,
@@ -67,7 +65,6 @@ function Homepage() {
                 })
                     .then(response => {
                         const classData = response.data;
-                        console.log('Class successfully joined:', classData);
                         navigate(0);
                     })
                     .catch(error => {

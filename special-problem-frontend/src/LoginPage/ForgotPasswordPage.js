@@ -49,7 +49,6 @@ function ForgotPasswordPage() {
             email: email,
         })
             .then(response => {
-                console.log('Code sent:', response.data);
             })
             .catch(error => {
                 console.error('Error sending code:', error);
@@ -69,7 +68,6 @@ function ForgotPasswordPage() {
                 password: password,
             })
                 .then(response => {
-                    console.log('Password reset:', response.data);
                     navigate('/login');
                 })
                 .catch(error => {

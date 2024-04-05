@@ -33,9 +33,8 @@ function LoginPage() {
         })
             .then(response => {
                 const userData = response.data;
-                console.log('User successfully logged in:', userData);
                 sessionStorage.setItem('userData', JSON.stringify(userData))
-                navigate('/home');
+                navigate('/');
             })
             .catch(error => {
                 console.error('Error logging in user:', error);

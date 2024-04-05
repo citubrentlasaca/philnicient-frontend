@@ -74,8 +74,10 @@ function ResultsPage() {
                     average_cri: result.averageCRI
                 });
 
-                return { ...result, predictedCRICriteria: predict.data.predicted_cri_criteria, accuracy: predict.data.accuracy };
+                return { ...result, predictedCRICriteria: predict.data.predicted_cri_criteria, accuracy: predict.data.accuracy, understandingLevel: predict.data.understanding_level };
             }));
+
+            console.log(updatedResultsData);
 
             const postRequests = updatedResultsData.map(async (result) => {
                 try {
@@ -85,7 +87,9 @@ function ResultsPage() {
                         total_score: result.score,
                         total_time_taken: result.totalTimeTaken,
                         average_cri: result.averageCRI,
+                        understanding_level: result.understandingLevel,
                         cri_criteria: result.predictedCRICriteria,
+                        accuracy: result.accuracy,
                         student_id: studentId,
                     }, {
                         headers: {
@@ -145,7 +149,9 @@ function ResultsPage() {
                             total_score: updatedResult.score,
                             total_time_taken: updatedResult.totalTimeTaken,
                             average_cri: updatedResult.averageCRI,
+                            understanding_level: updatedResult.understandingLevel,
                             cri_criteria: updatedResult.predictedCRICriteria,
+                            accuracy: updatedResult.accuracy,
                             student_id: studentId,
                         }, {
                             headers: {
@@ -317,6 +323,47 @@ function ResultsPage() {
         fetchData();
     }, []);
 
+    function getCategoryString(majorCategory) {
+        const category = parseInt(majorCategory);
+
+        switch (category) {
+            case 1:
+                return "Basic Theory";
+            case 2:
+                return "Computer Systems";
+            case 3:
+                return "Technical Elements";
+            case 4:
+                return "Development Techniques";
+            case 5:
+                return "Project Management";
+            case 6:
+                return "Service Management";
+            case 7:
+                return "System Strategy";
+            case 8:
+                return "Management Strategy";
+            case 9:
+                return "Corporate & Legal Affairs";
+            default:
+                return "Unknown Category";
+        }
+    }
+
+    function getUnderstandingFeedback(proficiencyLevel) {
+        if (proficiencyLevel < 21) {
+            return `Proficiency level is very low. More practice is needed to improve.`;
+        } else if (proficiencyLevel < 41) {
+            return `Proficiency level is low. You may need clarification on some concepts.`;
+        } else if (proficiencyLevel < 61) {
+            return `Proficiency level is moderate, but there are signs of guessing in responses. More focused practice is recommended.`;
+        } else if (proficiencyLevel < 81) {
+            return `Proficiency level is good, but some additional practice will further solidify the grasp on the concepts.`;
+        } else {
+            return `Congratulations! Proficiency level is excellent. Keep up the great work!`;
+        }
+    }
+
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
             <ResultsPageHeader />
@@ -434,86 +481,24 @@ function ResultsPage() {
                                 <tr>
                                     <th scope="col" style={{ color: colors.dark }}>Major Category</th>
                                     <th scope="col" style={{ color: colors.dark }}>Proficiency Level</th>
+                                    <th scope="col" style={{ color: colors.dark }}>Feedback</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {results.map((result, index) => (
                                     <tr key={index}>
                                         <td>
-                                            {result.majorCategory === 1 && "Basic Theory"}
-                                            {result.majorCategory === 2 && "Computer Systems"}
-                                            {result.majorCategory === 3 && "Technical Elements"}
-                                            {result.majorCategory === 4 && "Development Techniques"}
-                                            {result.majorCategory === 5 && "Project Management"}
-                                            {result.majorCategory === 6 && "Service Management"}
-                                            {result.majorCategory === 7 && "System Strategy"}
-                                            {result.majorCategory === 8 && "Management Strategy"}
-                                            {result.majorCategory === 9 && "Corporate & Legal Affairs"}
+                                            {getCategoryString(result.majorCategory)}
                                         </td>
                                         <td>
-                                            {result.majorCategory === 1 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Basic Theory"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Basic Theory"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Basic Theory"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 2 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Computer Systems"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Computer Systems"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Computer Systems"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 3 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Technical Elements"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Technical Elements"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Technical Elements"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 4 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Development Techniques"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Development Techniques"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Development Techniques"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 5 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Project Management"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Project Management"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Project Management"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 6 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Service Management"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Service Management"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Service Management"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 7 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in System Strategy"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in System Strategy"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in System Strategy"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 8 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Management Strategy"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Management Strategy"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Management Strategy"}
-                                                </span>
-                                            )}
-                                            {result.majorCategory === 9 && (
-                                                <span>
-                                                    {result.predictedCRICriteria === 'Understand' && "Subject knows the concepts required in Corporate & Legal Affairs"}
-                                                    {result.predictedCRICriteria === 'Does not understand' && "Subject does not understand the concepts required in Corporate & Legal Affairs"}
-                                                    {result.predictedCRICriteria === 'Misconception' && "Subject has misconceptions in Corporate & Legal Affairs"}
-                                                </span>
-                                            )}
+                                            {result.predictedCRICriteria === 'Understand' && `Subject knows the concepts required in ${getCategoryString(result.majorCategory)}.`}
+                                            {result.predictedCRICriteria === 'Does not understand' && `Subject does not understand the concepts required in ${getCategoryString(result.majorCategory)}.`}
+                                            {result.predictedCRICriteria === 'Misconception' && `Subject has misconceptions in ${getCategoryString(result.majorCategory)}.`}
+                                        </td>
+                                        <td>
+                                            <span>
+                                                {getUnderstandingFeedback(result.understandingLevel)}
+                                            </span>
                                         </td>
                                     </tr>
                                 ))}
