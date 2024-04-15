@@ -1,6 +1,12 @@
 {
-  "short_name": "PhilNITS Proficiency Assessment",
-  "name": "PhilNITS Proficiency Assessment",
-  "start_url": ".",
-  "display": "browser"
+  "name": "Philnicient",
+  "short_name": "Philnicient",
+  "description": "Assess users' proficiency across the nine major categories of the PhilNITS FE Exam using AI to analyze strengths, weaknesses, and misconceptions.",
+  "start_url": "/",
+  "display": "browser",
+  "scope": "/",
+  "categories": [
+    "education"
+  ],
+  "lang": "en"
 }
