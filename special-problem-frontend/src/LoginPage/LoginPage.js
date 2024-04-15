@@ -56,7 +56,7 @@ function LoginPage() {
                 backgroundColor: colors.darkest,
             }}
         >
-            <Link to="/home">
+            <Link to="/">
                 <img src={logo} alt="Logo"
                     style={{
                         width: "50px",

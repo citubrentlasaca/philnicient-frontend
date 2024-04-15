@@ -153,7 +153,7 @@ function ForgotPasswordPage() {
                     </div>
                 </div>
             </div>
-            <Link to="/home">
+            <Link to="/">
                 <img src={logo} alt="Logo"
                     style={{
                         width: "50px",
