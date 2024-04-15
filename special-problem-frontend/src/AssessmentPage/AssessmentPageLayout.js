@@ -13,7 +13,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`http://127.0.0.1:5000/api/assessments/${studentAssessmentId}`);
+                const response = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${studentAssessmentId}`);
 
                 const { datetimecreated } = response.data;
                 const currentTime = new Date();
@@ -36,7 +36,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
         };
 
         fetchData();
-    }, []);
+    }, [studentAssessmentId]);
 
     useEffect(() => {
         const countdown = setInterval(() => {

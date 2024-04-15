@@ -50,7 +50,7 @@ function SignUpPage() {
 
     const handleSignUp = () => {
         setLoading(true);
-        axios.post('http://127.0.0.1:5000/api/users', {
+        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users', {
             firstname: firstName,
             middlename: middleName,
             lastname: lastName,
@@ -79,7 +79,7 @@ function SignUpPage() {
                 backgroundColor: colors.darkest,
             }}
         >
-            <Link to="/">
+            <Link to="/home">
                 <img src={logo} alt="Logo"
                     style={{
                         width: "50px",
@@ -160,11 +160,11 @@ function SignUpPage() {
                         {loading ? (
                             <SmallLoading />
                         ) : (
-                            <p className='mb-0'>Sign Up</p>
+                            <p>Sign Up</p>
                         )}
                     </button>
                 </div>
-                <p className='mb-0'>Already have an account? Log in <Link to="/" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
+                <p>Already have an account? Log in <Link to="/login" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
             </div>
         </div>
     )

@@ -111,7 +111,25 @@ function ClassPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const studentResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/class/${classId}`, {
+                    headers: {
+                        Authorization: `Bearer ${userObject.access_token}`
+                    }
+                });
+            } catch (error) {
+                navigate("/class-not-found")
+                console.error("Student does not belong to this class");
+            }
+        }
+        if (role === "Student") {
+            fetchData();
+        }
+    }, [userData.id, classId, role, userObject.access_token, navigate]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                     headers: {
                         Authorization: `Bearer ${userObject.access_token}`
                     }
@@ -120,13 +138,13 @@ function ClassPage() {
                 const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
 
                 try {
-                    const assessmentResponse = await axios.get(`http://127.0.0.1:5000/api/assessments/students/${studentId}`, {
+                    const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/students/${studentId}`, {
                         headers: {
                             Authorization: `Bearer ${userObject.access_token}`
                         }
                     });
                     if (assessmentResponse.data) {
-                        const response = await axios.get(`http://127.0.0.1:5000/api/assessments/${assessmentResponse.data.assessment_id}`);
+                        const response = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentResponse.data.assessment_id}`);
 
                         const { datetimecreated } = response.data;
                         const currentTime = new Date();
@@ -138,7 +156,7 @@ function ClassPage() {
                         const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
                         const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
                         if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
-                            await axios.delete(`http://127.0.0.1:5000/api/assessments/${assessmentResponse.data.assessment_id}`);
+                            await axios.delete(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentResponse.data.assessment_id}`);
                         }
                         else {
                             setHasActiveAssessment(true);
@@ -163,12 +181,12 @@ function ClassPage() {
         if (role === "Student") {
             fetchData();
         }
-    }, []);
+    }, [classId, role, userObject.access_token, userData.id]);
 
     useEffect(() => {
         const fetchStudentData = async () => {
             try {
-                const studentResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                     headers: {
                         Authorization: `Bearer ${userObject.access_token}`
                     }
@@ -176,14 +194,14 @@ function ClassPage() {
                 const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
 
                 const studentIdsInClass = [];
-                const studentsInClass = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                const studentsInClass = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                     headers: {
                         Authorization: `Bearer ${userObject.access_token}`
                     }
                 });
                 studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
 
-                const assessmentResponse = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${studentId}`, {
+                const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
                     headers: {
                         Authorization: `Bearer ${userObject.access_token}`
                     }
@@ -191,7 +209,7 @@ function ClassPage() {
 
                 const tempModelResultsArray = [];
                 const tempAllModelResultsArray = [];
-                const getModelResults = await axios.get('http://127.0.0.1:5000/api/model_results', {
+                const getModelResults = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
                     headers: {
                         Authorization: `Bearer ${userObject.access_token}`
                     }
@@ -215,7 +233,7 @@ function ClassPage() {
                 const studentScores = [];
                 for (const studentId of studentIdsInClass) {
                     try {
-                        const studentAssessmentResult = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${studentId}`, {
+                        const studentAssessmentResult = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
                             headers: {
                                 Authorization: `Bearer ${userObject.access_token}`
                             }
@@ -319,7 +337,7 @@ function ClassPage() {
         const fetchTeacherData = async () => {
             try {
                 const studentsInClass = [];
-                const studentsResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                const studentsResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                     headers: {
                         Authorization: `Bearer ${userObject.access_token}`
                     }
@@ -328,12 +346,12 @@ function ClassPage() {
                 const studentAssessmentResults = [];
                 for (const student of studentsInClass) {
                     try {
-                        const assessmentResponse = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${student.id}`, {
+                        const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${student.id}`, {
                             headers: {
                                 Authorization: `Bearer ${userObject.access_token}`
                             }
                         });
-                        const userResponse = await axios.get(`http://127.0.0.1:5000/api/users/${student.student_id}`);
+                        const userResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/${student.student_id}`);
                         const studentName = userResponse.data.firstname + " " + userResponse.data.middlename + " " + userResponse.data.lastname;
                         studentAssessmentResults.push(
                             {
@@ -370,7 +388,7 @@ function ClassPage() {
         else {
             fetchTeacherData();
         }
-    }, []);
+    }, [classId, role, userObject.access_token, userData.id]);
 
     const handleTakeAssessmentClick = () => {
         const fetchData = async () => {
@@ -438,7 +456,7 @@ function ClassPage() {
 
                     setSelectedQuestion(firstQuestion);
 
-                    const studentResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+                    const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                         headers: {
                             Authorization: `Bearer ${userObject.access_token}`
                         }
@@ -446,7 +464,7 @@ function ClassPage() {
 
                     const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
 
-                    const studentAssessmentResponse = await axios.post('http://127.0.0.1:5000/api/assessments', {
+                    const studentAssessmentResponse = await axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments', {
                         student_id: studentId
                     }, {
                         headers: {
@@ -457,7 +475,7 @@ function ClassPage() {
                     const studentAssessmentId = studentAssessmentResponse.data.id;
                     const postResponses = [];
                     for (const question of allDocuments) {
-                        const response = await axios.post('http://127.0.0.1:5000/api/questions', {
+                        const response = await axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/questions', {
                             question: question.question,
                             figure: question.figure,
                             choices: question.choices,
@@ -506,7 +524,7 @@ function ClassPage() {
     }
 
     const handleContinueAssessmentClick = async () => {
-        const studentResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+        const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
             headers: {
                 Authorization: `Bearer ${userObject.access_token}`
             }
@@ -524,14 +542,14 @@ function ClassPage() {
     const handleStudentClick = async (clickedStudentId, name) => {
         try {
             const studentIdsInClass = [];
-            const studentsInClass = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+            const studentsInClass = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                 headers: {
                     Authorization: `Bearer ${userObject.access_token}`
                 }
             });
             studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
 
-            const assessmentResponse = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${clickedStudentId}`, {
+            const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${clickedStudentId}`, {
                 headers: {
                     Authorization: `Bearer ${userObject.access_token}`
                 }
@@ -539,7 +557,7 @@ function ClassPage() {
 
             const tempModelResultsArray = [];
             const tempAllModelResultsArray = [];
-            const getModelResults = await axios.get('http://127.0.0.1:5000/api/model_results', {
+            const getModelResults = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
                 headers: {
                     Authorization: `Bearer ${userObject.access_token}`
                 }
@@ -563,7 +581,7 @@ function ClassPage() {
             const studentScores = [];
             for (const studentId of studentIdsInClass) {
                 try {
-                    const studentAssessmentResult = await axios.get(`http://127.0.0.1:5000/api/assessment_results/students/${studentId}`, {
+                    const studentAssessmentResult = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
                         headers: {
                             Authorization: `Bearer ${userObject.access_token}`
                         }
@@ -671,7 +689,7 @@ function ClassPage() {
 
     const copyClassCode = async () => {
         try {
-            const classResponse = await axios.get(`http://127.0.0.1:5000/api/classes/${classId}`);
+            const classResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/${classId}`);
             const textarea = document.createElement('textarea');
             textarea.value = classResponse.data.classcode;
             document.body.appendChild(textarea);
@@ -690,14 +708,14 @@ function ClassPage() {
             const studentIdsInClass = [];
             const tempAllModelResultsArray = [];
 
-            const studentsInClassResponse = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+            const studentsInClassResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                 headers: {
                     Authorization: `Bearer ${userObject.access_token}`
                 }
             });
             studentsInClassResponse.data.forEach(student => studentIdsInClass.push(student.id));
 
-            const getModelResultsResponse = await axios.get('http://127.0.0.1:5000/api/model_results', {
+            const getModelResultsResponse = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
                 headers: {
                     Authorization: `Bearer ${userObject.access_token}`
                 }
@@ -750,7 +768,7 @@ function ClassPage() {
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
-                            <p className='mb-0'>Generating assessment...</p>
+                            <p>Generating assessment...</p>
                             <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
                                 <div className="spinner-border" role="status"
                                     style={{
@@ -844,7 +862,7 @@ function ClassPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <p className='mb-0'>No data found.</p>
+                                <p>No data found.</p>
                             )}
                             {hasActiveAssessment ? (
                                 <button className='btn btn-primary' onClick={handleContinueAssessmentClick}
@@ -973,7 +991,7 @@ function ClassPage() {
                                             <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
                                         </svg>
                                     ) : (
-                                        <p className='mb-0'>Copy class code</p>
+                                        <p>Copy class code</p>
                                     )}
                                 </button>
                             )}
@@ -997,7 +1015,7 @@ function ClassPage() {
                                 </div>
                             ) : (
                                 <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
-                                    <p className='mb-0'>No data found.</p>
+                                    <p>No data found.</p>
                                     {role === "Teacher" && (
                                         <button className='btn btn-primary' onClick={copyClassCode}
                                             style={{
@@ -1014,7 +1032,7 @@ function ClassPage() {
                                                     <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
                                                 </svg>
                                             ) : (
-                                                <p className='mb-0'>Copy class code</p>
+                                                <p>Copy class code</p>
                                             )}
                                         </button>
                                     )}

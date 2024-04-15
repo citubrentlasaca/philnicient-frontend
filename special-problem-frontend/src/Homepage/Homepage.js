@@ -30,7 +30,7 @@ function Homepage() {
     }
 
     const handleCreateClassClick = () => {
-        axios.post('http://127.0.0.1:5000/api/classes', {
+        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes', {
             classname: className,
             teacher_id: userData.id,
         }, {
@@ -54,17 +54,16 @@ function Homepage() {
 
     const handleJoinClassClick = () => {
         setButtonLoading(true);
-        axios.get(`http://127.0.0.1:5000/api/classes/code/${classCodeInput}`)
+        axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/code/${classCodeInput}`)
             .then(response => {
                 const classData = response.data;
                 const classId = classData.id;
 
-                axios.post('http://127.0.0.1:5000/api/students', {
+                axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students', {
                     class_id: classId,
                     student_id: userData.id,
                 })
                     .then(response => {
-                        const classData = response.data;
                         navigate(0);
                     })
                     .catch(error => {
@@ -82,7 +81,7 @@ function Homepage() {
         const fetchData = async () => {
             if (userData.role === 'Teacher') {
                 const teacherClasses = [];
-                const allClasses = await axios.get('http://127.0.0.1:5000/api/classes');
+                const allClasses = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes');
                 for (const classes of allClasses.data) {
                     if (classes.teacher_id === userData.id) {
                         teacherClasses.push(classes);
@@ -94,7 +93,7 @@ function Homepage() {
             }
             else if (userData.role === 'Student') {
                 const students = [];
-                const allStudents = await axios.get('http://127.0.0.1:5000/api/students');
+                const allStudents = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students');
                 for (const student of allStudents.data) {
                     if (student.student_id === userData.id) {
                         students.push(student);
@@ -103,7 +102,7 @@ function Homepage() {
 
                 const studentClasses = [];
                 for (const student of students) {
-                    const allClasses = await axios.get('http://127.0.0.1:5000/api/classes');
+                    const allClasses = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes');
                     for (const classes of allClasses.data) {
                         if (classes.id === student.class_id) {
                             studentClasses.push(classes);
@@ -115,7 +114,7 @@ function Homepage() {
                 setLoading(false);
             }
             else if (userData.role === 'Admin') {
-                const allClasses = await axios.get('http://127.0.0.1:5000/api/classes');
+                const allClasses = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes');
 
                 setClasses(allClasses.data);
                 setLoading(false);

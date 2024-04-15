@@ -63,7 +63,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
         });
 
         setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
-        await axios.delete(`http://127.0.0.1:5000/api/assessments/${assessmentId}`);
+        await axios.delete(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentId}`);
         navigate(`/results`, {
             state: {
                 modelInputsData: modelInputsData,

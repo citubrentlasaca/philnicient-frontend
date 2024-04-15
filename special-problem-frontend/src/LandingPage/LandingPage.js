@@ -92,7 +92,7 @@ function LandingPage() {
                     >
                         Ready to Ace the PhilNITS FE Exam?
                     </h3>
-                    <p className='mb-0'>
+                    <p>
                         Start your journey towards success today with Philnicient.
                     </p>
                     <Link to="/signup">

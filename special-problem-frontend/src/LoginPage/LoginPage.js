@@ -27,14 +27,14 @@ function LoginPage() {
 
     const handleLogInClick = (e) => {
         setLoading(true);
-        axios.post('http://127.0.0.1:5000/api/users/login', {
+        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/login', {
             username_or_email: username,
             password: password,
         })
             .then(response => {
                 const userData = response.data;
                 sessionStorage.setItem('userData', JSON.stringify(userData))
-                navigate('/');
+                navigate('/home');
             })
             .catch(error => {
                 console.error('Error logging in user:', error);
@@ -56,7 +56,7 @@ function LoginPage() {
                 backgroundColor: colors.darkest,
             }}
         >
-            <Link to="/">
+            <Link to="/home">
                 <img src={logo} alt="Logo"
                     style={{
                         width: "50px",
@@ -108,7 +108,7 @@ function LoginPage() {
                         {loading ? (
                             <SmallLoading />
                         ) : (
-                            <p className='mb-0'>Login</p>
+                            <p>Login</p>
                         )}
                     </button>
                     {error && (
@@ -116,8 +116,8 @@ function LoginPage() {
                     )}
                 </div>
                 <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
-                    <p className='mb-0'>Don't have an account yet? Sign up <Link to="/signup" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
-                    <Link to="/forgotpassword" style={{ textDecoration: "none" }}>
+                    <p>Don't have an account yet? Sign up <Link to="/signup" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
+                    <Link to="/forgot-password" style={{ textDecoration: "none" }}>
                         <p className='mb-0' style={{ color: colors.accent }}>Forgot password?</p>
                     </Link>
                 </div>
