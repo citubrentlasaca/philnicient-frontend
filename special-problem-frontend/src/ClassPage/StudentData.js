@@ -3,6 +3,60 @@ import colors from '../colors'
 import { Radar } from 'react-chartjs-2';
 
 function StudentData({ comprehensiveAnalysis, detailedScoreAnalysis, scoreDistribution, options, competencyDiagnosis }) {
+    function getCategoryString(majorCategory) {
+        switch (majorCategory) {
+            case 1:
+                return "Basic Theory";
+            case 2:
+                return "Computer Systems";
+            case 3:
+                return "Technical Elements";
+            case 4:
+                return "Development Techniques";
+            case 5:
+                return "Project Management";
+            case 6:
+                return "Service Management";
+            case 7:
+                return "System Strategy";
+            case 8:
+                return "Management Strategy";
+            case 9:
+                return "Corporate & Legal Affairs";
+            default:
+                return "Unknown Category";
+        }
+    }
+
+    function renderCriteriaMessage(competencyDiagnosis) {
+        const { cri_criteria, major_category } = competencyDiagnosis;
+        const categoryString = getCategoryString(major_category);
+
+        if (cri_criteria === 'Understand') {
+            return `Subject knows the concepts required in ${categoryString}.`;
+        } else if (cri_criteria === 'Does not understand') {
+            return `Subject does not understand the concepts required in ${categoryString}.`;
+        } else if (cri_criteria === 'Misconception') {
+            return `Subject has misconceptions in ${categoryString}.`;
+        } else {
+            return '';
+        }
+    }
+
+    function getUnderstandingFeedback(proficiencyLevel) {
+        if (proficiencyLevel < 21) {
+            return `Proficiency level is very low. More practice is needed to improve.`;
+        } else if (proficiencyLevel < 41) {
+            return `Proficiency level is low. You may need clarification on some concepts.`;
+        } else if (proficiencyLevel < 61) {
+            return `Proficiency level is moderate, but there are signs of guessing in responses. More focused practice is recommended.`;
+        } else if (proficiencyLevel < 81) {
+            return `Proficiency level is good, but some additional practice will further solidify the grasp on the concepts.`;
+        } else {
+            return `Congratulations! Proficiency level is excellent. Keep up the great work!`;
+        }
+    }
+
     return (
         <div className='w-100 d-flex flex-column justify-content-start align-items-center gap-4'>
             <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
@@ -110,86 +164,18 @@ function StudentData({ comprehensiveAnalysis, detailedScoreAnalysis, scoreDistri
                         <tr>
                             <th scope="col" style={{ color: colors.dark }}>Major Category</th>
                             <th scope="col" style={{ color: colors.dark }}>Proficiency Level</th>
+                            <th scope="col" style={{ color: colors.dark }}>Feedback</th>
                         </tr>
                     </thead>
                     <tbody>
                         {competencyDiagnosis.map((competencyDiagnosis, index) => (
                             <tr key={index}>
+                                <td>{getCategoryString(competencyDiagnosis.major_category)}</td>
                                 <td>
-                                    {competencyDiagnosis.major_category === 1 && "Basic Theory"}
-                                    {competencyDiagnosis.major_category === 2 && "Computer Systems"}
-                                    {competencyDiagnosis.major_category === 3 && "Technical Elements"}
-                                    {competencyDiagnosis.major_category === 4 && "Development Techniques"}
-                                    {competencyDiagnosis.major_category === 5 && "Project Management"}
-                                    {competencyDiagnosis.major_category === 6 && "Service Management"}
-                                    {competencyDiagnosis.major_category === 7 && "System Strategy"}
-                                    {competencyDiagnosis.major_category === 8 && "Management Strategy"}
-                                    {competencyDiagnosis.major_category === 9 && "Corporate & Legal Affairs"}
+                                    <span>{renderCriteriaMessage(competencyDiagnosis)}</span>
                                 </td>
                                 <td>
-                                    {competencyDiagnosis.major_category === 1 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Basic Theory"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Basic Theory"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Basic Theory"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 2 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Computer Systems"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Computer Systems"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Computer Systems"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 3 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Technical Elements"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Technical Elements"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Technical Elements"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 4 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Development Techniques"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Development Techniques"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Development Techniques"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 5 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Project Management"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Project Management"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Project Management"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 6 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Service Management"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Service Management"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Service Management"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 7 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in System Strategy"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in System Strategy"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in System Strategy"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 8 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Management Strategy"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Management Strategy"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Management Strategy"}
-                                        </span>
-                                    )}
-                                    {competencyDiagnosis.major_category === 9 && (
-                                        <span>
-                                            {competencyDiagnosis.cri_criteria === 'Understand' && "Subject knows the concepts required in Corporate & Legal Affairs"}
-                                            {competencyDiagnosis.cri_criteria === 'Does not understand' && "Subject does not understand the concepts required in Corporate & Legal Affairs"}
-                                            {competencyDiagnosis.cri_criteria === 'Misconception' && "Subject has misconceptions in Corporate & Legal Affairs"}
-                                        </span>
-                                    )}
+                                    <span>{getUnderstandingFeedback(competencyDiagnosis.understanding_level)}</span>
                                 </td>
                             </tr>
                         ))}

@@ -6,21 +6,21 @@ import axios from 'axios';
 function AssessmentPageLayout({ children, itemNumber, totalItems, questions, studentAssessmentId, classId, studentId }) {
     const [timeRemaining, setTimeRemaining] = useState({
         hours: 2,
-        minutes: 30,
+        minutes: 0,
         seconds: 0,
     });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`http://127.0.0.1:5000/api/assessments/${studentAssessmentId}`);
+                const response = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${studentAssessmentId}`);
 
                 const { datetimecreated } = response.data;
                 const currentTime = new Date();
                 const assessmentTime = new Date(datetimecreated);
                 const timeDifference = Math.abs(currentTime - assessmentTime);
 
-                const remainingMilliseconds = 2 * 60 * 60 * 1000 + 30 * 60 * 1000 - timeDifference;
+                const remainingMilliseconds = 2 * 60 * 60 * 1000 - timeDifference;
                 const remainingHours = Math.floor(remainingMilliseconds / (1000 * 60 * 60));
                 const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
                 const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
@@ -36,7 +36,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
         };
 
         fetchData();
-    }, []);
+    }, [studentAssessmentId]);
 
     useEffect(() => {
         const countdown = setInterval(() => {

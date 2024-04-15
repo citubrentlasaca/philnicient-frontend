@@ -3,6 +3,7 @@ import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import SmallLoading from '../Components/SmallLoading'
 
 function LoginPage() {
     const [username, setUsername] = useState('')
@@ -26,13 +27,12 @@ function LoginPage() {
 
     const handleLogInClick = (e) => {
         setLoading(true);
-        axios.post('http://127.0.0.1:5000/api/users/login', {
+        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/login', {
             username_or_email: username,
             password: password,
         })
             .then(response => {
                 const userData = response.data;
-                console.log('User successfully logged in:', userData);
                 sessionStorage.setItem('userData', JSON.stringify(userData))
                 navigate('/home');
             })
@@ -56,7 +56,7 @@ function LoginPage() {
                 backgroundColor: colors.darkest,
             }}
         >
-            <Link to="/">
+            <Link to="/home">
                 <img src={logo} alt="Logo"
                     style={{
                         width: "50px",
@@ -95,7 +95,7 @@ function LoginPage() {
                             </button>
                         </div>
                     </div>
-                    <button type="button" className="btn btn-primary" onClick={handleLogInClick}
+                    <button type="button" className="btn btn-primary small-button" onClick={handleLogInClick}
                         style={{
                             width: "100px",
                             height: "40px",
@@ -106,17 +106,9 @@ function LoginPage() {
                         }}
                     >
                         {loading ? (
-                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                <div className="spinner-border spinner-border-sm" role="status"
-                                    style={{
-                                        color: colors.dark,
-                                    }}
-                                >
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
+                            <SmallLoading />
                         ) : (
-                            <p className='mb-0'>Login</p>
+                            <p>Login</p>
                         )}
                     </button>
                     {error && (
@@ -124,8 +116,8 @@ function LoginPage() {
                     )}
                 </div>
                 <div className='w-100 d-flex flex-column justify-content-center align-items-center gap-2'>
-                    <p className='mb-0'>Don't have an account yet? Sign up <Link to="/signup" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
-                    <Link to="/forgotpassword" style={{ textDecoration: "none" }}>
+                    <p>Don't have an account yet? Sign up <Link to="/signup" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
+                    <Link to="/forgot-password" style={{ textDecoration: "none" }}>
                         <p className='mb-0' style={{ color: colors.accent }}>Forgot password?</p>
                     </Link>
                 </div>

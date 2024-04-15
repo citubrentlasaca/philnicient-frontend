@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import colors from '../colors';
 import AssessmentPageLayout from './AssessmentPageLayout';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
 function AssessmentPage() {
@@ -15,16 +15,36 @@ function AssessmentPage() {
     const userDataString = sessionStorage.getItem('userData');
     const userObject = JSON.parse(userDataString);
     const userData = userObject.user;
+    const [role, setRole] = useState(userData.role)
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/assessment/${assessmentId}`, {
+                    headers: {
+                        Authorization: `Bearer ${userObject.access_token}`
+                    }
+                });
+            } catch (error) {
+                navigate("/assessment-not-found")
+                console.error("Assessment not found.");
+            }
+        }
+        if (role === "Student") {
+            fetchData();
+        }
+    }, [assessmentId, navigate, role, userData.id, userObject.access_token]);
 
     useEffect(() => {
         if (questions && selectedQuestion) {
             setLoading(false);
         } else {
-            axios.get(`http://127.0.0.1:5000/api/assessments/${assessmentId}`)
+            axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentId}`)
                 .then(response => {
                     const questionsArray = response.data.questions;
                     const promises = questionsArray.map(assessment =>
-                        axios.get(`http://127.0.0.1:5000/api/questions/${assessment}`)
+                        axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/questions/${assessment}`)
                     );
 
                     Promise.all(promises)
@@ -67,13 +87,13 @@ function AssessmentPage() {
                     console.error('Error fetching student assessments:', error);
                 });
         }
-    }, []);
+    }, [assessmentId, questions, selectedQuestion]);
 
     useEffect(() => {
         const intervalId = setInterval(async () => {
             try {
                 for (const question of questions) {
-                    await axios.put(`http://127.0.0.1:5000/api/questions/${question.id}`, {
+                    await axios.put(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/questions/${question.id}`, {
                         question: question.question,
                         figure: question.figure,
                         choices: question.choices,
@@ -90,14 +110,13 @@ function AssessmentPage() {
                         }
                     });
                 }
-                console.log('Progress saved successfully');
             } catch (error) {
                 console.error('Error updating questions:', error);
             }
         }, 5 * 60 * 1000);
 
         return () => clearInterval(intervalId);
-    }, []);
+    }, [questions, userObject.access_token]);
 
     const getCertaintyLabel = (studentCRI) => {
         if (studentCRI === 0) {
@@ -298,7 +317,7 @@ function AssessmentPage() {
                                         Mark as For Review
                                     </label>
                                 </div>
-                                <p className='mb-0'>
+                                <p>
                                     {selectedQuestion && selectedQuestion.question}
                                 </p>
                                 {selectedQuestion && selectedQuestion.figure && (

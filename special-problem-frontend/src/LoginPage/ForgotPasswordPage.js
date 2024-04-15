@@ -3,6 +3,7 @@ import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import SmallLoading from '../Components/SmallLoading'
 
 function ForgotPasswordPage() {
     const navigate = useNavigate();
@@ -44,11 +45,10 @@ function ForgotPasswordPage() {
     }
 
     const handleRequestCodeClick = () => {
-        axios.post('http://127.0.0.1:5000/api/users/forgot-password', {
+        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/forgot-password', {
             email: email,
         })
             .then(response => {
-                console.log('Code sent:', response.data);
             })
             .catch(error => {
                 console.error('Error sending code:', error);
@@ -62,13 +62,12 @@ function ForgotPasswordPage() {
         }
         else {
             setLoading(true);
-            axios.post('http://127.0.0.1:5000/api/users/reset-password', {
+            axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/reset-password', {
                 email: email,
                 code: code,
                 password: password,
             })
                 .then(response => {
-                    console.log('Password reset:', response.data);
                     navigate('/login');
                 })
                 .catch(error => {
@@ -92,7 +91,7 @@ function ForgotPasswordPage() {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
-                            <p className='mb-0'>We have sent an email containing a code to reset your password. Please check your inbox.</p>
+                            <p>We have sent an email containing a code to reset your password. Please check your inbox.</p>
                             <div className="w-100">
                                 <label htmlFor="codeInput" className="form-label">Code</label>
                                 <input type="text" className="form-control" id="codeInput" onChange={handleCodeChange} />
@@ -145,24 +144,16 @@ function ForgotPasswordPage() {
 
                             <button type="button" className="btn btn-primary" style={{ width: "100px", height: "40px", backgroundColor: colors.accent, color: colors.dark, border: "none" }} onClick={handleResetClick}>
                                 {loading ? (
-                                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                        <div className="spinner-border spinner-border-sm" role="status"
-                                            style={{
-                                                color: colors.dark,
-                                            }}
-                                        >
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                    </div>
+                                    <SmallLoading />
                                 ) : (
-                                    <p className='mb-0'>Reset</p>
+                                    <p>Reset</p>
                                 )}
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <Link to="/">
+            <Link to="/home">
                 <img src={logo} alt="Logo"
                     style={{
                         width: "50px",

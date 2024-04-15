@@ -3,6 +3,7 @@ import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios';
+import SmallLoading from '../Components/SmallLoading';
 
 function SignUpPage() {
     const [firstName, setFirstName] = useState('');
@@ -49,7 +50,7 @@ function SignUpPage() {
 
     const handleSignUp = () => {
         setLoading(true);
-        axios.post('http://127.0.0.1:5000/api/users', {
+        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users', {
             firstname: firstName,
             middlename: middleName,
             lastname: lastName,
@@ -59,7 +60,6 @@ function SignUpPage() {
             role: role
         })
             .then(response => {
-                console.log('User created:', response.data);
                 navigate('/login');
             })
             .catch(error => {
@@ -79,7 +79,7 @@ function SignUpPage() {
                 backgroundColor: colors.darkest,
             }}
         >
-            <Link to="/">
+            <Link to="/home">
                 <img src={logo} alt="Logo"
                     style={{
                         width: "50px",
@@ -158,21 +158,13 @@ function SignUpPage() {
                         }}
                     >
                         {loading ? (
-                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                <div className="spinner-border spinner-border-sm" role="status"
-                                    style={{
-                                        color: colors.dark,
-                                    }}
-                                >
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
+                            <SmallLoading />
                         ) : (
-                            <p className='mb-0'>Sign Up</p>
+                            <p>Sign Up</p>
                         )}
                     </button>
                 </div>
-                <p className='mb-0'>Already have an account? Log in <Link to="/" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
+                <p>Already have an account? Log in <Link to="/login" style={{ textDecoration: "none", color: colors.accent }}>here.</Link></p>
             </div>
         </div>
     )

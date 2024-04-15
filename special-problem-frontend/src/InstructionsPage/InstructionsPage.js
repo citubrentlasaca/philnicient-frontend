@@ -48,11 +48,11 @@ function LandingPage() {
                         <ul>
                             <li>Click on the "Start" button located on the right side of the header.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={start} />
+                                <img className='img-fluid rounded' src={start} alt='Start button' />
                             </div>
                             <li>A dialog box will appear, prompting you to start the assessment. Choose "Yes" or "No" to proceed.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={modal} />
+                                <img className='img-fluid rounded' src={modal} alt='Start prompt' />
                             </div>
                         </ul>
                     </li>
@@ -69,22 +69,22 @@ function LandingPage() {
                         <ul>
                             <li>On the assessment page, find the time remaining on the right side of the header.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={timeremaining} />
+                                <img className='img-fluid rounded' src={timeremaining} alt='Time remaining' />
                             </div>
                             <li>Use the navigation buttons on the left side to move between questions.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={navigationbuttons} />
+                                <img className='img-fluid rounded' src={navigationbuttons} alt='Assessment navigation' />
                             </div>
                             <li>Answer questions on the right side of the page. Your current question number is displayed on the left side of the footer.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={answerquestions} />
+                                <img className='img-fluid rounded' src={answerquestions} alt='Answer' />
                             </div>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={number} />
+                                <img className='img-fluid rounded' src={number} alt='Item number' />
                             </div>
                             <li>If you reach the last question, a "Submit" button will appear on the right side of the footer.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={submit} />
+                                <img className='img-fluid rounded' src={submit} alt='Submit button' />
                             </div>
                         </ul>
                     </li>
@@ -93,7 +93,7 @@ function LandingPage() {
                         <ul>
                             <li>Below each question, you have to adjust the scale according to how certain you are of your answer.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={scale} />
+                                <img className='img-fluid rounded' src={scale} alt='CRI scale' />
                             </div>
                             <li>0 - Totally Guessed Answer</li>
                             <li>1 - Almost Guess</li>
@@ -109,7 +109,7 @@ function LandingPage() {
                         <ul>
                             <li>To mark a question for review, check the checkbox located above each question.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={mark} />
+                                <img className='img-fluid rounded' src={mark} alt='Mark for review' />
                             </div>
                         </ul>
                     </li>
@@ -121,7 +121,7 @@ function LandingPage() {
                             <li>Answered questions have green navigation buttons.</li>
                             <li>Questions marked for review have red navigation buttons.</li>
                             <div className='w-100 d-flex justify-content-center align-items-center'>
-                                <img className='img-fluid rounded' src={status} />
+                                <img className='img-fluid rounded' src={status} alt='Question status indicators' />
                             </div>
                         </ul>
                     </li>

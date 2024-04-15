@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import colors from '../colors'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios';
+import SmallLoading from '../Components/SmallLoading';
 
 function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId, classId, studentId }) {
     const [score, setScore] = useState(0);
@@ -62,7 +63,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
         });
 
         setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
-        await axios.delete(`http://127.0.0.1:5000/api/assessments/${assessmentId}`);
+        await axios.delete(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentId}`);
         navigate(`/results`, {
             state: {
                 modelInputsData: modelInputsData,
@@ -106,15 +107,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
                 }}
             >
                 {loading ? (
-                    <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                        <div className="spinner-border spinner-border-sm" role="status"
-                            style={{
-                                color: colors.dark,
-                            }}
-                        >
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
+                    <SmallLoading />
                 ) : (
                     <p className="mb-0">Submit</p>
                 )}

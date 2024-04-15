@@ -12,7 +12,7 @@ function LandingPageHeader({ questions, selectedQuestion, classId, studentId }) 
 
     const handleYesButtonClick = async () => {
         try {
-            const response1 = await axios.get(`http://127.0.0.1:5000/api/students/classes/${classId}`, {
+            const response1 = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
                 headers: {
                     Authorization: `Bearer ${userObject.access_token}`
                 }
@@ -22,7 +22,7 @@ function LandingPageHeader({ questions, selectedQuestion, classId, studentId }) 
                 console.error('Student ID not found');
             }
 
-            const response2 = await axios.get('http://127.0.0.1:5000/api/assessments');
+            const response2 = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments');
 
             const studentAssessments = response2.data.filter(assessment => assessment.student_id === studentId);
 
