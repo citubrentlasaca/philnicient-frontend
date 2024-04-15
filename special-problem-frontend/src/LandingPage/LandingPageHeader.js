@@ -12,7 +12,7 @@ function LandingPageHeader() {
 
             }}
         >
-            <Link to="/home">
+            <Link to="/">
                 <img src={logo} alt="Logo"
                     style={{
                         height: "50px",
