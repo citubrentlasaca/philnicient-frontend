@@ -109,21 +109,41 @@ function ClassPage() {
     };
 
     useEffect(() => {
+        const fetchClass = async () => {
+            try {
+                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/${classId}`)
+            } catch (error) {
+                console.error("Class does not exist", error);
+                navigate("/class-not-found");
+            }
+        }
+
+        fetchClass();
+    }, [classId, navigate]);
+
+    useEffect(() => {
         const fetchData = async () => {
             try {
-                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/class/${classId}`, {
-                    headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
+                if (role === "Student") {
+                    await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/class/${classId}`, {
+                        headers: {
+                            Authorization: `Bearer ${userObject.access_token}`
+                        }
+                    });
+                }
+                else if (role === "Teacher") {
+                    const classData = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/${classId}`)
+                    if (userData.id !== classData.data.teacher_id) {
+                        navigate("/class-not-found")
+                        console.error("Teacher does not belong to this class");
                     }
-                });
+                }
             } catch (error) {
                 navigate("/class-not-found")
                 console.error("Student does not belong to this class");
             }
         }
-        if (role === "Student") {
-            fetchData();
-        }
+        fetchData();
     }, [userData.id, classId, role, userObject.access_token, navigate]);
 
     useEffect(() => {

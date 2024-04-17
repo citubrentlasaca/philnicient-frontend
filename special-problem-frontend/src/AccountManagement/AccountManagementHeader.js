@@ -3,7 +3,7 @@ import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
 
-function HomepageHeader() {
+function AccountManagementHeader() {
     const navigate = useNavigate();
     const userDataString = sessionStorage.getItem('userData');
     const userObject = JSON.parse(userDataString);
@@ -58,4 +58,4 @@ function HomepageHeader() {
     )
 }
 
-export default HomepageHeader
+export default AccountManagementHeader

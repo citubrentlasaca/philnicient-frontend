@@ -12,6 +12,8 @@ import LandingPage from './LandingPage/LandingPage.js';
 import PageNotFound from './PageNotFound/PageNotFound.js';
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import AccountManagementPage from './AccountManagement/AccountManagementPage.js';
+import ContentManagementPage from './ContentManagement/ContentManagementPage.js';
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
           <Route path='/instructions' element={<PrivateRoute redirectTo="/login" component={InstructionsPage} />} />
           <Route path="/assessment/:assessmentId" element={<PrivateRoute redirectTo="/login" component={AssessmentPage} />} />
           <Route path="/results" element={<PrivateRoute redirectTo="/login" component={ResultsPage} />} />
+          <Route path="/account-management" element={<PrivateRoute redirectTo="/login" component={AccountManagementPage} />} />
+          <Route path='/content-management' element={<PrivateRoute redirectTo="/login" component={ContentManagementPage} />} />
           <Route path='*' element={<PageNotFound />} />
         </Routes>
       </Router>
