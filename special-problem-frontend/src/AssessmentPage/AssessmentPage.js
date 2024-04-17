@@ -19,22 +19,39 @@ function AssessmentPage() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        const fetchClass = async () => {
+            try {
+                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentId}`)
+            } catch (error) {
+                console.error("Assessment does not exist", error);
+                navigate("/assessment-not-found");
+            }
+        }
+
+        fetchClass();
+    }, [assessmentId, navigate]);
+
+    useEffect(() => {
         const fetchData = async () => {
             try {
-                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/assessment/${assessmentId}`, {
-                    headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
-                    }
-                });
+                if (role === 'Student') {
+                    await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/assessment/${assessmentId}`, {
+                        headers: {
+                            Authorization: `Bearer ${userObject.access_token}`
+                        }
+                    });
+                }
+                else if (role === 'Teacher' || role === 'Admin') {
+                    navigate("/assessment-not-found")
+                    console.error("Assessment not found.");
+                }
             } catch (error) {
                 navigate("/assessment-not-found")
                 console.error("Assessment not found.");
             }
         }
-        if (role === "Student") {
-            fetchData();
-        }
-    }, [assessmentId, navigate, role, userData.id, userObject.access_token]);
+        fetchData();
+    }, [assessmentId, navigate, userData.id, userObject.access_token, role]);
 
     useEffect(() => {
         if (questions && selectedQuestion) {
