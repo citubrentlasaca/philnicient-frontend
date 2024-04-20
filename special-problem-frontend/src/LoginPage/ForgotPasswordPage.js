@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import SmallLoading from '../Components/SmallLoading'
+import api from '../Utilities/api'
 
 function ForgotPasswordPage() {
     const navigate = useNavigate();
@@ -44,37 +44,37 @@ function ForgotPasswordPage() {
         setShowConfirmPassword(!showConfirmPassword);
     }
 
-    const handleRequestCodeClick = () => {
-        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/forgot-password', {
-            email: email,
-        })
-            .then(response => {
+    const handleRequestCodeClick = async () => {
+        try {
+            await api.post('/users/forgot-password', {
+                email: email,
             })
-            .catch(error => {
-                console.error('Error sending code:', error);
-            });
+        }
+        catch (error) {
+            console.error('Error sending code:', error);
+        }
     }
 
-    const handleResetClick = () => {
+    const handleResetClick = async () => {
         if (password !== confirmPassword) {
             setPasswordMatchError(true)
             setLoading(false);
         }
         else {
             setLoading(true);
-            axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/reset-password', {
-                email: email,
-                code: code,
-                password: password,
-            })
-                .then(response => {
-                    navigate('/login');
+            try {
+                await api.post('/users/reset-password', {
+                    email: email,
+                    code: code,
+                    password: password,
                 })
-                .catch(error => {
-                    console.error('Error resetting password:', error);
-                    setCodeError(true);
-                    setLoading(false);
-                });
+                navigate('/login');
+            }
+            catch (error) {
+                console.error('Error resetting password:', error);
+                setCodeError(true);
+                setLoading(false);
+            }
         }
     }
 

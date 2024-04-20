@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import colors from '../colors'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios';
 import SmallLoading from '../Components/SmallLoading';
+import api from '../Utilities/api';
 
 function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId, classId, studentId }) {
+    const navigate = useNavigate()
     const [score, setScore] = useState(0);
     const [modelInputs, setModelInputs] = useState([])
     const [loading, setLoading] = useState(false)
-    const navigate = useNavigate()
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -62,8 +62,15 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
             });
         });
 
+
         setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
-        await axios.delete(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentId}`);
+        try {
+            await api.delete(`/assessments/${assessmentId}`);
+        }
+        catch (error) {
+            console.error("Error deleting assessment: ", error);
+        }
+
         navigate(`/results`, {
             state: {
                 modelInputsData: modelInputsData,

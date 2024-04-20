@@ -2,26 +2,32 @@ import React, { useEffect, useState } from 'react'
 import colors from '../colors';
 import AssessmentPageLayout from './AssessmentPageLayout';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../Utilities/api';
 
 function AssessmentPage() {
+    const navigate = useNavigate();
     const location = useLocation();
-    const { tempQuestions, tempSelectedQuestion, classId, studentId } = location.state || {};
-    const [questions, setQuestions] = useState(tempQuestions);
-    const [selectedQuestion, setSelectedQuestion] = useState(tempSelectedQuestion);
+    const { classId, studentId } = location.state || {};
+    const { assessmentId } = useParams();
+    const userId = sessionStorage.getItem('user_id');
+    const role = sessionStorage.getItem('role');
+    const token = sessionStorage.getItem('access_token');
+    const [questions, setQuestions] = useState(null);
+    const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [certaintyIndex, setCertaintyIndex] = useState(0);
     const [loading, setLoading] = useState(true);
-    const { assessmentId } = useParams();
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
-    const userData = userObject.user;
-    const [role, setRole] = useState(userData.role)
-    const navigate = useNavigate();
+
+    useEffect(() => {
+        const modalBackdrop = document.querySelector('.modal-backdrop.fade.show');
+        if (modalBackdrop) {
+            modalBackdrop.parentNode.removeChild(modalBackdrop);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchClass = async () => {
             try {
-                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentId}`)
+                await api.get(`/assessments/${assessmentId}`)
             } catch (error) {
                 console.error("Assessment does not exist", error);
                 navigate("/assessment-not-found");
@@ -35,9 +41,9 @@ function AssessmentPage() {
         const fetchData = async () => {
             try {
                 if (role === 'Student') {
-                    await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/assessment/${assessmentId}`, {
+                    await api.get(`/students/${userId}/assessment/${assessmentId}`, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                 }
@@ -51,66 +57,68 @@ function AssessmentPage() {
             }
         }
         fetchData();
-    }, [assessmentId, navigate, userData.id, userObject.access_token, role]);
+    }, [assessmentId, navigate, userId, token, role]);
 
     useEffect(() => {
-        if (questions && selectedQuestion) {
-            setLoading(false);
-        } else {
-            axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentId}`)
-                .then(response => {
-                    const questionsArray = response.data.questions;
-                    const promises = questionsArray.map(assessment =>
-                        axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/questions/${assessment}`)
-                    );
+        const fetchQuestions = async () => {
+            try {
+                const assessmentResponse = await api.get(`/assessments/${assessmentId}`)
+                const questionsArray = assessmentResponse.data.questions;
+                const promises = questionsArray.map(assessment =>
+                    api.get(`/questions/${assessment}`))
 
-                    Promise.all(promises)
-                        .then(responses => {
-                            const formattedQuestions = responses.map(response => {
-                                const {
-                                    question,
-                                    figure,
-                                    choices,
-                                    answer,
-                                    major_category: majorCategory,
-                                    student_answer: studentAnswer,
-                                    student_cri: studentCRI,
-                                    is_for_review: isForReview,
-                                    time
-                                } = response.data;
+                Promise.all(promises)
+                    .then(responses => {
+                        const formattedQuestions = responses.map(response => {
+                            const {
+                                question,
+                                figure,
+                                choices,
+                                answer,
+                                major_category: majorCategory,
+                                student_answer: studentAnswer,
+                                student_cri: studentCRI,
+                                is_for_review: isForReview,
+                                time
+                            } = response.data;
 
-                                return {
-                                    question,
-                                    figure,
-                                    choices,
-                                    answer,
-                                    majorCategory,
-                                    studentAnswer,
-                                    studentCRI,
-                                    isForReview,
-                                    time
-                                };
-                            });
-
-                            setQuestions(formattedQuestions);
-                            setSelectedQuestion(formattedQuestions[0]);
-                            setLoading(false);
-                        })
-                        .catch(error => {
-                            console.error('Error fetching assessments:', error);
+                            return {
+                                question,
+                                figure,
+                                choices,
+                                answer,
+                                majorCategory,
+                                studentAnswer,
+                                studentCRI,
+                                isForReview,
+                                time
+                            };
                         });
-                })
-                .catch(error => {
-                    console.error('Error fetching student assessments:', error);
-                });
+
+                        setQuestions(formattedQuestions);
+                        setSelectedQuestion({
+                            ...formattedQuestions[0],
+                            itemNumber: 1
+                        });
+                        setLoading(false);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching assessments:', error);
+                    });
+            }
+            catch (error) {
+                console.error('Error fetching questions:', error);
+            }
         }
-    }, [assessmentId, questions, selectedQuestion]);
+
+        fetchQuestions();
+    }, [assessmentId]);
 
     useEffect(() => {
         const intervalId = setInterval(async () => {
-            try {
-                for (const question of questions) {
-                    await axios.put(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/questions/${question.id}`, {
+            for (const question of questions) {
+                try {
+                    await api.put(`/questions/${question.id}`, {
                         question: question.question,
                         figure: question.figure,
                         choices: question.choices,
@@ -123,17 +131,18 @@ function AssessmentPage() {
                         assessment_id: question.assessmentId
                     }, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                 }
-            } catch (error) {
-                console.error('Error updating questions:', error);
+                catch (error) {
+                    console.error('Error updating questions:', error);
+                }
             }
         }, 5 * 60 * 1000);
 
         return () => clearInterval(intervalId);
-    }, [questions, userObject.access_token]);
+    }, [questions, token]);
 
     const getCertaintyLabel = (studentCRI) => {
         if (studentCRI === 0) {

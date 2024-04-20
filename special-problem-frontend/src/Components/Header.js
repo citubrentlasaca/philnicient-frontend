@@ -1,14 +1,12 @@
-import React, { useState } from 'react'
+import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 
-function HomepageHeader() {
+function Header() {
+    const location = useLocation();
     const navigate = useNavigate();
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
-    const userData = userObject.user;
-    const [role, setRole] = useState(userData.role);
+    const role = sessionStorage.getItem('role');
 
     const handleLogoutClick = () => {
         sessionStorage.clear();
@@ -42,6 +40,13 @@ function HomepageHeader() {
                         </Link>
                     </>
                 }
+                {role === 'Student' && location.pathname !== "/results" &&
+                    <>
+                        <Link to="/instructions" style={{ textDecoration: "none" }}>
+                            <p style={{ color: colors.accent }}>Instructions</p>
+                        </Link>
+                    </>
+                }
             </div>
             <button className="btn btn-primary" type="button" onClick={handleLogoutClick}
                 style={{
@@ -58,4 +63,4 @@ function HomepageHeader() {
     )
 }
 
-export default HomepageHeader
+export default Header

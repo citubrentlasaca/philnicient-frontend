@@ -1,7 +1,7 @@
 import AssessmentPage from './AssessmentPage/AssessmentPage.js';
 import colors from './colors';
 import InstructionsPage from './InstructionsPage/InstructionsPage.js';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ResultsPage from './ResultsPage/ResultsPage.js';
 import LoginPage from './LoginPage/LoginPage.js';
 import SignUpPage from './SignUpPage/SignUpPage.js';
@@ -14,6 +14,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import AccountManagementPage from './AccountManagement/AccountManagementPage.js';
 import ContentManagementPage from './ContentManagement/ContentManagementPage.js';
+import { PublicRoute, PrivateRoute } from './Components/RouteComponents.js';
 
 function App() {
   return (
@@ -45,17 +46,3 @@ function App() {
 }
 
 export default App;
-
-const PublicRoute = ({ component: Component, redirectTo }) => {
-  const userDataString = sessionStorage.getItem('userData');
-  const userData = JSON.parse(userDataString);
-  const token = userData?.access_token;
-  return token ? <Navigate to={redirectTo} /> : <Component />;
-};
-
-const PrivateRoute = ({ component: Component, redirectTo }) => {
-  const userDataString = sessionStorage.getItem('userData');
-  const userData = JSON.parse(userDataString);
-  const token = userData?.access_token;
-  return token ? <Component /> : <Navigate to={redirectTo} />;
-};

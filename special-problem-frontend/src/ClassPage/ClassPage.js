@@ -1,26 +1,25 @@
 import React, { useEffect, useState } from 'react'
 import colors from '../colors'
-import ClassPageHeader from './ClassPageHeader'
 import { getDocs, collection, query, where } from "firebase/firestore";
 import { firestore } from '../firebaseConfig.js';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import StudentData from './StudentData.js';
 import { Chart } from 'react-chartjs-2';
 import NormalLoading from '../Components/NormalLoading.js';
+import Header from '../Components/Header.js';
+import api from '../Utilities/api.js';
 
 function ClassPage() {
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
-    const userData = userObject.user;
-    const [role, setRole] = useState(userData.role)
+    const navigate = useNavigate();
+    const { classId } = useParams();
+    const userId = sessionStorage.getItem('user_id');
+    const role = sessionStorage.getItem('role');
+    const token = sessionStorage.getItem('access_token');
     const [loading, setLoading] = useState(true)
     const [hasPreviousData, setHasPreviousData] = useState(false)
     const [hasActiveAssessment, setHasActiveAssessment] = useState(false)
     const [questions, setQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
-    const navigate = useNavigate();
-    const { classId } = useParams();
     const [assessmentId, setAssessmentId] = useState(null);
     const [comprehensiveAnalysis, setComprehensiveAnalysis] = useState(null);
     const [competencyDiagnosis, setCompetencyDiagnosis] = useState(null);
@@ -111,7 +110,7 @@ function ClassPage() {
     useEffect(() => {
         const fetchClass = async () => {
             try {
-                await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/${classId}`)
+                await api.get(`/classes/${classId}`)
             } catch (error) {
                 console.error("Class does not exist", error);
                 navigate("/class-not-found");
@@ -125,46 +124,46 @@ function ClassPage() {
         const fetchData = async () => {
             try {
                 if (role === "Student") {
-                    await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/${userData.id}/class/${classId}`, {
+                    await api.get(`/students/${userId}/class/${classId}`, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                 }
                 else if (role === "Teacher") {
-                    const classData = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/${classId}`)
-                    if (userData.id !== classData.data.teacher_id) {
+                    const classData = await api.get(`/classes/${classId}`)
+                    if (userId !== classData.data.teacher_id) {
                         navigate("/class-not-found")
                         console.error("Teacher does not belong to this class");
                     }
                 }
             } catch (error) {
                 navigate("/class-not-found")
-                console.error("Student does not belong to this class");
+                console.error("Teacher/Student does not belong to this class");
             }
         }
+
         fetchData();
-    }, [userData.id, classId, role, userObject.access_token, navigate]);
+    }, [userId, classId, role, token, navigate]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
+                const studentResponse = await api.get(`/students/classes/${classId}`, {
                     headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
+                        Authorization: `Bearer ${token}`
                     }
                 });
-
-                const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
+                const studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
 
                 try {
-                    const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/students/${studentId}`, {
+                    const assessmentResponse = await api.get(`/assessments/students/${studentId}`, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                     if (assessmentResponse.data) {
-                        const response = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentResponse.data.assessment_id}`);
+                        const response = await api.get(`/assessments/${assessmentResponse.data.assessment_id}`);
 
                         const { datetimecreated } = response.data;
                         const currentTime = new Date();
@@ -176,7 +175,7 @@ function ClassPage() {
                         const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
                         const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
                         if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
-                            await axios.delete(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${assessmentResponse.data.assessment_id}`);
+                            await api.delete(`/assessments/${assessmentResponse.data.assessment_id}`);
                         }
                         else {
                             setHasActiveAssessment(true);
@@ -194,68 +193,93 @@ function ClassPage() {
                 setLoading(false);
             }
             catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error fetching students in class:", error);
             }
         };
 
         if (role === "Student") {
             fetchData();
         }
-    }, [classId, role, userObject.access_token, userData.id]);
+    }, [classId, role, token, userId]);
 
     useEffect(() => {
         const fetchStudentData = async () => {
             try {
-                const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
-                    headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
-                    }
-                });
-                const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
-
+                let studentId;
+                let assessmentResponseData;
+                let totalClassScore = 0;
                 const studentIdsInClass = [];
-                const studentsInClass = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
-                    headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
-                    }
-                });
-                studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
-
-                const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
-                    headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
-                    }
-                });
-
                 const tempModelResultsArray = [];
                 const tempAllModelResultsArray = [];
-                const getModelResults = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
-                    headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
-                    }
-                });
-                getModelResults.data.forEach((modelResult) => {
-                    if (modelResult.student_id === studentId) {
-                        tempModelResultsArray.push(modelResult);
-                    }
-                });
-                for (const studentIdInClass of studentIdsInClass) {
-                    getModelResults.data.forEach((modelResult) => {
-                        if (modelResult.student_id === studentIdInClass) {
-                            tempAllModelResultsArray.push(modelResult);
+                const studentScores = [];
+
+                try {
+                    const studentResponse = await api.get(`/students/classes/${classId}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
                         }
                     });
+                    studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
                 }
+                catch (error) {
+                    console.error("Error fetching student ID:", error);
+                }
+
+                try {
+                    const studentsInClass = await api.get(`/students/classes/${classId}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
+                }
+                catch (error) {
+                    console.error("Error fetching students in class:", error);
+                }
+
+                try {
+                    const assessmentResponse = await api.get(`/assessment_results/students/${studentId}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    assessmentResponseData = assessmentResponse.data;
+                }
+                catch (error) {
+                    console.error("Error fetching assessment result for student ID:", studentId, error);
+                }
+
+                try {
+                    const getModelResults = await api.get('/model_results', {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    for (const modelResult of getModelResults.data) {
+                        if (modelResult.student_id === studentId) {
+                            tempModelResultsArray.push(modelResult);
+                        }
+                    }
+                    for (const studentIdInClass of studentIdsInClass) {
+                        for (const modelResult of getModelResults.data) {
+                            if (modelResult.student_id === studentIdInClass) {
+                                tempAllModelResultsArray.push(modelResult);
+                            }
+                        }
+                    }
+                }
+                catch (error) {
+                    console.error("Error fetching model results:", error);
+                }
+
                 tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
                 tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
 
-                let totalClassScore = 0;
-                const studentScores = [];
                 for (const studentId of studentIdsInClass) {
                     try {
-                        const studentAssessmentResult = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
+                        const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`, {
                             headers: {
-                                Authorization: `Bearer ${userObject.access_token}`
+                                Authorization: `Bearer ${token}`
                             }
                         });
                         totalClassScore += studentAssessmentResult.data.total_score;
@@ -265,8 +289,9 @@ function ClassPage() {
                         continue;
                     }
                 }
+
                 studentScores.sort((a, b) => b - a);
-                const assessmentData = assessmentResponse.data;
+                const assessmentData = assessmentResponseData;
                 const scorePercentage = ((assessmentData.total_score / assessmentData.total_items) * 100).toFixed(2) + "%";
                 const classAverage = (totalClassScore / studentIdsInClass.length).toFixed(2);
                 const top30Index = Math.ceil(studentScores.length * 0.3);
@@ -357,29 +382,42 @@ function ClassPage() {
         const fetchTeacherData = async () => {
             try {
                 const studentsInClass = [];
-                const studentsResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
-                    headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
-                    }
-                });
-                studentsResponse.data.forEach(student => studentsInClass.push(student));
                 const studentAssessmentResults = [];
+
+                try {
+                    const studentsResponse = await api.get(`/students/classes/${classId}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    studentsResponse.data.forEach(student => studentsInClass.push(student));
+                }
+                catch (error) {
+                    console.error("Error fetching students in class:", error);
+                }
+
                 for (const student of studentsInClass) {
                     try {
-                        const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${student.id}`, {
+                        const assessmentResponse = await api.get(`/assessment_results/students/${student.id}`, {
                             headers: {
-                                Authorization: `Bearer ${userObject.access_token}`
+                                Authorization: `Bearer ${token}`
                             }
                         });
-                        const userResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/${student.student_id}`);
-                        const studentName = userResponse.data.firstname + " " + userResponse.data.middlename + " " + userResponse.data.lastname;
-                        studentAssessmentResults.push(
-                            {
-                                studentName: studentName,
-                                studentId: student.id,
-                                totalScore: assessmentResponse.data.total_score,
-                            }
-                        );
+                        try {
+                            const userResponse = await api.get(`/users/${student.student_id}`);
+                            const studentName = userResponse.data.firstname + " " + userResponse.data.middlename + " " + userResponse.data.lastname;
+                            studentAssessmentResults.push(
+                                {
+                                    studentName: studentName,
+                                    studentId: student.id,
+                                    totalScore: assessmentResponse.data.total_score,
+                                }
+                            );
+                        }
+                        catch (error) {
+                            console.error("Error fetching user data for student ID:", student.student_id, error);
+                            continue;
+                        }
                     }
                     catch (error) {
                         console.error("Error fetching assessment result for student ID:", student, error);
@@ -408,11 +446,13 @@ function ClassPage() {
         else {
             fetchTeacherData();
         }
-    }, [classId, role, userObject.access_token, userData.id]);
+    }, [classId, role, token, userId]);
 
     const handleTakeAssessmentClick = () => {
         const fetchData = async () => {
             try {
+                let studentId;
+                let studentAssessmentId;
                 const fetchDocuments = async (collectionName, majorCategory, count) => {
                     const q = query(collection(firestore, collectionName), where("tag", "==", majorCategory));
                     const querySnapshot = await getDocs(q);
@@ -441,15 +481,15 @@ function ClassPage() {
                     }));
                 };
 
-                const basictheory = await fetchDocuments("Technology", "Basic Theory", 7);
-                const computersystems = await fetchDocuments("Technology", "Computer Systems", 7);
-                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 7);
-                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 7);
-                const projectmanagement = await fetchDocuments("Management", "Project Management", 7);
-                const servicemanagement = await fetchDocuments("Management", "Service Management", 7);
-                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 7);
-                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 7);
-                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 7);
+                const basictheory = await fetchDocuments("Technology", "Basic Theory", 1);
+                const computersystems = await fetchDocuments("Technology", "Computer Systems", 1);
+                const technicalelements = await fetchDocuments("Technology", "Technical Elements", 1);
+                const developmenttechniques = await fetchDocuments("Technology", "Development Techniques", 1);
+                const projectmanagement = await fetchDocuments("Management", "Project Management", 1);
+                const servicemanagement = await fetchDocuments("Management", "Service Management", 1);
+                const systemstrategy = await fetchDocuments("Strategy", "System Strategy", 1);
+                const managementstrategy = await fetchDocuments("Strategy", "Management Strategy", 1);
+                const corporate = await fetchDocuments("Strategy", "Corporate & Legal Affairs", 1);
 
                 const allDocuments = [
                     ...basictheory,
@@ -476,60 +516,59 @@ function ClassPage() {
 
                     setSelectedQuestion(firstQuestion);
 
-                    const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
-                        headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
-                        }
-                    });
-
-                    const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
-
-                    const studentAssessmentResponse = await axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments', {
-                        student_id: studentId
-                    }, {
-                        headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
-                        }
-                    });
-
-                    const studentAssessmentId = studentAssessmentResponse.data.id;
-                    const postResponses = [];
-                    for (const question of allDocuments) {
-                        const response = await axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/questions', {
-                            question: question.question,
-                            figure: question.figure,
-                            choices: question.choices,
-                            answer: question.answer,
-                            major_category: question.majorCategory,
-                            student_answer: question.studentAnswer,
-                            student_cri: question.studentCRI,
-                            is_for_review: question.isForReview,
-                            time: question.time,
-                            assessment_id: studentAssessmentId
-                        }, {
+                    try {
+                        const studentResponse = await api.get(`/students/classes/${classId}`, {
                             headers: {
-                                Authorization: `Bearer ${userObject.access_token}`
+                                Authorization: `Bearer ${token}`
                             }
                         });
-                        postResponses.push({
-                            id: response.data.id,
-                            question: response.data.question,
-                            figure: response.data.figure,
-                            choices: response.data.choices,
-                            answer: response.data.answer,
-                            majorCategory: response.data.major_category,
-                            studentAnswer: response.data.student_answer,
-                            studentCRI: response.data.student_cri,
-                            isForReview: response.data.is_for_review,
-                            time: response.data.time,
-                            assessmentId: response.data.assessment_id
-                        });
+
+                        studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
+                    }
+                    catch (error) {
+                        console.error("Error fetching students in class:", error);
                     }
 
-                    navigate('/instructions', {
+                    try {
+                        const studentAssessmentResponse = await api.post('/assessments', {
+                            student_id: studentId
+                        }, {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        });
+                        studentAssessmentId = studentAssessmentResponse.data.id;
+                        for (const question of allDocuments) {
+                            try {
+                                await api.post('/questions', {
+                                    question: question.question,
+                                    figure: question.figure,
+                                    choices: question.choices,
+                                    answer: question.answer,
+                                    major_category: question.majorCategory,
+                                    student_answer: question.studentAnswer,
+                                    student_cri: question.studentCRI,
+                                    is_for_review: question.isForReview,
+                                    time: question.time,
+                                    assessment_id: studentAssessmentId
+                                }, {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`
+                                    }
+                                });
+                            }
+                            catch (error) {
+                                console.error("Error creating question:", error);
+                                continue;
+                            }
+                        }
+                    }
+                    catch (error) {
+                        console.error("Error creating assessment:", error);
+                    }
+
+                    navigate(`/assessment/${studentAssessmentId}`, {
                         state: {
-                            tempQuestions: postResponses,
-                            tempSelectedQuestion: firstQuestion,
                             classId: classId,
                             studentId: studentId,
                         }
@@ -544,66 +583,90 @@ function ClassPage() {
     }
 
     const handleContinueAssessmentClick = async () => {
-        const studentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
-            headers: {
-                Authorization: `Bearer ${userObject.access_token}`
-            }
-        });
+        try {
+            const studentResponse = await api.get(`/students/classes/${classId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
 
-        const studentId = studentResponse.data.find(student => student.student_id === userData.id)?.id;
-        navigate(`/assessment/${assessmentId}`, {
-            state: {
-                studentId: studentId,
-                classId: classId,
-            }
-        });
+            const studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
+            navigate(`/assessment/${assessmentId}`, {
+                state: {
+                    studentId: studentId,
+                    classId: classId,
+                }
+            });
+        }
+        catch (error) {
+            console.error("Error fetching data:", error);
+        }
     }
 
     const handleStudentClick = async (clickedStudentId, name) => {
         try {
+            let assessmentResponseData;
+            let totalClassScore = 0;
             const studentIdsInClass = [];
-            const studentsInClass = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
-                headers: {
-                    Authorization: `Bearer ${userObject.access_token}`
-                }
-            });
-            studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
-
-            const assessmentResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${clickedStudentId}`, {
-                headers: {
-                    Authorization: `Bearer ${userObject.access_token}`
-                }
-            });
-
             const tempModelResultsArray = [];
             const tempAllModelResultsArray = [];
-            const getModelResults = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
-                headers: {
-                    Authorization: `Bearer ${userObject.access_token}`
-                }
-            });
-            getModelResults.data.forEach((modelResult) => {
-                if (modelResult.student_id === clickedStudentId) {
-                    tempModelResultsArray.push(modelResult);
-                }
-            });
-            for (const studentIdInClass of studentIdsInClass) {
-                getModelResults.data.forEach((modelResult) => {
-                    if (modelResult.student_id === studentIdInClass) {
-                        tempAllModelResultsArray.push(modelResult);
+            const studentScores = [];
+
+            try {
+                const studentsInClass = await api.get(`/students/classes/${classId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
                     }
                 });
+                studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
             }
+            catch (error) {
+                console.error("Error fetching students in class:", error);
+            }
+
+            try {
+                const assessmentResponse = await api.get(`/assessment_results/students/${clickedStudentId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                assessmentResponseData = assessmentResponse.data;
+            }
+            catch (error) {
+                console.error("Error fetching assessment result for student ID:", clickedStudentId, error);
+            }
+
+            try {
+                const getModelResults = await api.get('/model_results', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                getModelResults.data.forEach((modelResult) => {
+                    if (modelResult.student_id === clickedStudentId) {
+                        tempModelResultsArray.push(modelResult);
+                    }
+                });
+                for (const studentIdInClass of studentIdsInClass) {
+                    getModelResults.data.forEach((modelResult) => {
+                        if (modelResult.student_id === studentIdInClass) {
+                            tempAllModelResultsArray.push(modelResult);
+                        }
+                    });
+                }
+            }
+            catch (error) {
+                console.error("Error fetching model results:", error);
+            }
+
             tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
             tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
 
-            let totalClassScore = 0;
-            const studentScores = [];
             for (const studentId of studentIdsInClass) {
                 try {
-                    const studentAssessmentResult = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
+                    const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                     totalClassScore += studentAssessmentResult.data.total_score;
@@ -614,7 +677,7 @@ function ClassPage() {
                 }
             }
             studentScores.sort((a, b) => b - a);
-            const assessmentData = assessmentResponse.data;
+            const assessmentData = assessmentResponseData;
             const scorePercentage = ((assessmentData.total_score / assessmentData.total_items) * 100).toFixed(2) + "%";
             const classAverage = (totalClassScore / studentIdsInClass.length).toFixed(2);
             const top30Index = Math.ceil(studentScores.length * 0.3);
@@ -709,7 +772,7 @@ function ClassPage() {
 
     const copyClassCode = async () => {
         try {
-            const classResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/${classId}`);
+            const classResponse = await api.get(`/classes/${classId}`);
             const textarea = document.createElement('textarea');
             textarea.value = classResponse.data.classcode;
             document.body.appendChild(textarea);
@@ -728,25 +791,35 @@ function ClassPage() {
             const studentIdsInClass = [];
             const tempAllModelResultsArray = [];
 
-            const studentsInClassResponse = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
-                headers: {
-                    Authorization: `Bearer ${userObject.access_token}`
-                }
-            });
-            studentsInClassResponse.data.forEach(student => studentIdsInClass.push(student.id));
-
-            const getModelResultsResponse = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
-                headers: {
-                    Authorization: `Bearer ${userObject.access_token}`
-                }
-            });
-
-            for (const studentId of studentIdsInClass) {
-                getModelResultsResponse.data.forEach((modelResult) => {
-                    if (modelResult.student_id === studentId) {
-                        tempAllModelResultsArray.push(modelResult);
+            try {
+                const studentsInClassResponse = await api.get(`/students/classes/${classId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
                     }
                 });
+                studentsInClassResponse.data.forEach(student => studentIdsInClass.push(student.id));
+            }
+            catch (error) {
+                console.error("Error fetching students in class:", error);
+            }
+
+            try {
+                const getModelResultsResponse = await api.get('/model_results', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                for (const studentId of studentIdsInClass) {
+                    getModelResultsResponse.data.forEach((modelResult) => {
+                        if (modelResult.student_id === studentId) {
+                            tempAllModelResultsArray.push(modelResult);
+                        }
+                    });
+                }
+            }
+            catch (error) {
+                console.error("Error fetching model results:", error);
             }
 
             tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
@@ -829,7 +902,7 @@ function ClassPage() {
                     </div>
                 </div>
             </div>
-            <ClassPageHeader />
+            <Header />
             {loading ? (
                 <NormalLoading />
             ) : (
