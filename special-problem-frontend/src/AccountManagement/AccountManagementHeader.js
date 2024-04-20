@@ -1,14 +1,11 @@
-import React, { useState } from 'react'
+import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
 
 function AccountManagementHeader() {
     const navigate = useNavigate();
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
-    const userData = userObject.user;
-    const [role, setRole] = useState(userData.role);
+    const role = sessionStorage.getItem('role');
 
     const handleLogoutClick = () => {
         sessionStorage.clear();

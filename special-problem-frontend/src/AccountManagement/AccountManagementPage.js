@@ -2,20 +2,19 @@ import React, { useEffect, useState } from 'react'
 import AccountManagementHeader from './AccountManagementHeader'
 import NormalLoading from '../Components/NormalLoading';
 import colors from '../colors'
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../Utilities/api';
+import { set } from 'firebase/database';
 
 function AccountManagementPage() {
+    const navigate = useNavigate();
+    const role = sessionStorage.getItem('role');
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchInput, setSearchInput] = useState('');
     const [idToDelete, setIdToDelete] = useState('');
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
-    const userData = userObject.user;
-    const [role, setRole] = useState(userData.role);
-    const navigate = useNavigate();
+    const [roleToDelete, setRoleToDelete] = useState('');
 
     useEffect(() => {
         if (role !== 'Admin') {
@@ -26,7 +25,7 @@ function AccountManagementPage() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const users = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users`);
+                const users = await api.get(`/users`);
                 const filteredUsers = users.data.filter(user => user.firstname !== "Admin");
 
                 setUsers(filteredUsers);
@@ -48,8 +47,24 @@ function AccountManagementPage() {
         setFilteredUsers(filtered);
     };
 
-    const handleDeleteUserClick = (id) => {
+    const handleDeleteUserClick = (id, role) => {
         setIdToDelete(id);
+        setRoleToDelete(role);
+    }
+
+    const deleteUser = async () => {
+        try {
+            if (roleToDelete === 'Student') {
+                await api.delete(`/users/${idToDelete}/delete-student`);
+            }
+            else if (roleToDelete === 'Teacher') {
+                await api.delete(`/users/${idToDelete}/delete-teacher`);
+            }
+            navigate(0);
+        }
+        catch (error) {
+            console.error('Error deleting user:', error);
+        }
     }
 
     return (
@@ -65,7 +80,7 @@ function AccountManagementPage() {
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn btn-primary" data-bs-dismiss="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>No</button>
-                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal" style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Yes</button>
+                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={deleteUser} style={{ width: "100px", backgroundColor: colors.accent, color: colors.dark, border: "none" }}>Yes</button>
                         </div>
                     </div>
                 </div>
@@ -107,7 +122,7 @@ function AccountManagementPage() {
                                         <td>{user.username}</td>
                                         <td>{user.role}</td>
                                         <td>
-                                            <button type='button' className='btn' data-bs-toggle="modal" data-bs-target="#staticBackdrop" onClick={() => handleDeleteUserClick(user.id)}>
+                                            <button type='button' className='btn' data-bs-toggle="modal" data-bs-target="#staticBackdrop" onClick={() => handleDeleteUserClick(user.id, user.role)}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill={colors.wrong} className="bi bi-person-x-fill" viewBox="0 0 16 16">
                                                     <path fillRule="evenodd" d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m6.146-2.854a.5.5 0 0 1 .708 0L14 6.293l1.146-1.147a.5.5 0 0 1 .708.708L14.707 7l1.147 1.146a.5.5 0 0 1-.708.708L14 7.707l-1.146 1.147a.5.5 0 0 1-.708-.708L13.293 7l-1.147-1.146a.5.5 0 0 1 0-.708" />
                                                 </svg>
