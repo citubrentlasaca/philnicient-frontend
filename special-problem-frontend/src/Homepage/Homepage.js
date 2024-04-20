@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react'
-import HomepageHeader from './HomepageHeader'
+import Header from '../Components/Header'
 import colors from '../colors'
-import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import NormalLoading from '../Components/NormalLoading';
+import api from '../Utilities/api';
 
 function Homepage() {
+    const navigate = useNavigate();
+    const userId = sessionStorage.getItem('user_id');
+    const role = sessionStorage.getItem('role');
+    const token = sessionStorage.getItem('access_token');
     const [loading, setLoading] = useState(true)
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
-    const userData = userObject.user;
-    const [role, setRole] = useState(userData.role)
     const [className, setClassName] = useState('')
     const [classCode, setClassCode] = useState('')
     const [classCodeLoading, setClassCodeLoading] = useState(true)
@@ -18,7 +18,6 @@ function Homepage() {
     const [classCodeInput, setClassCodeInput] = useState('')
     const [classCodeError, setClassCodeError] = useState(false)
     const [buttonLoading, setButtonLoading] = useState(false)
-    const navigate = useNavigate();
 
     const handleClassNameChange = (e) => {
         setClassName(e.target.value)
@@ -29,100 +28,115 @@ function Homepage() {
         setClassCodeError(false)
     }
 
-    const handleCreateClassClick = () => {
-        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes', {
-            classname: className,
-            teacher_id: userData.id,
-        }, {
-            headers: {
-                Authorization: `Bearer ${userObject.access_token}`
-            }
-        })
-            .then(response => {
-                const classData = response.data;
-                setClassCode(classData.classcode)
-                setClassCodeLoading(false)
-            })
-            .catch(error => {
-                console.error('Error creating class:', error);
+    const handleCreateClassClick = async () => {
+        try {
+            const response = await api.post('/classes', {
+                classname: className,
+                teacher_id: userId,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
+            const classData = response.data;
+            setClassCode(classData.classcode)
+            setClassCodeLoading(false)
+        }
+        catch (error) {
+            console.error('Error creating class:', error);
+        }
     }
 
     const handlePostClassCreation = () => {
         navigate(0);
     }
 
-    const handleJoinClassClick = () => {
+    const handleJoinClassClick = async () => {
         setButtonLoading(true);
-        axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes/code/${classCodeInput}`)
-            .then(response => {
-                const classData = response.data;
-                const classId = classData.id;
+        try {
+            const response = await api.get(`/classes/code/${classCodeInput}`);
+            const classData = response.data;
+            const classId = classData.id;
 
-                axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students', {
+            try {
+                await api.post('/students', {
                     class_id: classId,
-                    student_id: userData.id,
-                })
-                    .then(response => {
-                        navigate(0);
-                    })
-                    .catch(error => {
-                        console.error('Error joining class:', error);
-                    });
-            })
-            .catch(error => {
-                console.error('Error finding class:', error);
-                setClassCodeError(true)
-                setButtonLoading(false)
-            });
+                    student_id: userId,
+                });
+                navigate(0);
+            }
+            catch (error) {
+                console.error('Error creating student:', error);
+            }
+        }
+        catch (error) {
+            console.error('Error joining class:', error);
+            setClassCodeError(true)
+            setButtonLoading(false)
+        }
     }
 
     useEffect(() => {
         const fetchData = async () => {
-            if (userData.role === 'Teacher') {
+            if (role === 'Teacher') {
                 const teacherClasses = [];
-                const allClasses = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes');
-                for (const classes of allClasses.data) {
-                    if (classes.teacher_id === userData.id) {
-                        teacherClasses.push(classes);
-                    }
-                }
-
-                setClasses(teacherClasses);
-                setLoading(false);
-            }
-            else if (userData.role === 'Student') {
-                const students = [];
-                const allStudents = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students');
-                for (const student of allStudents.data) {
-                    if (student.student_id === userData.id) {
-                        students.push(student);
-                    }
-                }
-
-                const studentClasses = [];
-                for (const student of students) {
-                    const allClasses = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes');
+                try {
+                    const allClasses = await api.get('/classes');
                     for (const classes of allClasses.data) {
-                        if (classes.id === student.class_id) {
-                            studentClasses.push(classes);
+                        if (classes.teacher_id === userId) {
+                            teacherClasses.push(classes);
                         }
                     }
+
+                    setClasses(teacherClasses);
+                    setLoading(false);
                 }
-
-                setClasses(studentClasses);
-                setLoading(false);
+                catch (error) {
+                    console.error('Error fetching all classes:', error);
+                }
             }
-            else if (userData.role === 'Admin') {
-                const allClasses = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/classes');
+            else if (role === 'Student') {
+                const students = [];
+                try {
+                    const allStudents = await api.get('/students');
+                    for (const student of allStudents.data) {
+                        if (student.student_id === userId) {
+                            students.push(student);
+                        }
+                    }
 
-                setClasses(allClasses.data);
-                setLoading(false);
+                    const studentClasses = [];
+                    for (const student of students) {
+                        const allClasses = await api.get('/classes');
+                        for (const classes of allClasses.data) {
+                            if (classes.id === student.class_id) {
+                                studentClasses.push(classes);
+                            }
+                        }
+                    }
+
+                    setClasses(studentClasses);
+                    setLoading(false);
+                }
+                catch (error) {
+                    console.error('Error fetching all students:', error);
+                }
+            }
+            else if (role === 'Admin') {
+                try {
+                    const allClasses = await api.get('/classes');
+
+                    setClasses(allClasses.data);
+                    setLoading(false);
+                }
+                catch (error) {
+                    console.error('Error fetching all classes:', error);
+                }
             }
         };
 
         fetchData();
-    }, [userData.id, userData.role]);
+    }, [role, userId]);
 
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
@@ -203,7 +217,7 @@ function Homepage() {
                     </div>
                 </div>
             </div>
-            <HomepageHeader />
+            <Header />
             {role === 'Teacher' && (
                 loading ? (
                     <NormalLoading />

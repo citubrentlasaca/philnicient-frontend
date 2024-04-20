@@ -2,10 +2,11 @@ import React, { useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios';
 import SmallLoading from '../Components/SmallLoading';
+import api from '../Utilities/api';
 
 function SignUpPage() {
+    const navigate = useNavigate();
     const [firstName, setFirstName] = useState('');
     const [middleName, setMiddleName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -16,7 +17,6 @@ function SignUpPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [usernameError, setUsernameError] = useState(false);
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
     const handleFirstNameChange = (event) => {
         setFirstName(event.target.value);
@@ -48,25 +48,25 @@ function SignUpPage() {
         setPassword(event.target.value);
     }
 
-    const handleSignUp = () => {
+    const handleSignUp = async () => {
         setLoading(true);
-        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users', {
-            firstname: firstName,
-            middlename: middleName,
-            lastname: lastName,
-            email: email,
-            username: username,
-            password: password,
-            role: role
-        })
-            .then(response => {
-                navigate('/login');
-            })
-            .catch(error => {
-                console.error('Error creating user:', error);
-                setUsernameError(true);
-                setLoading(false);
+        try {
+            await api.post('/users', {
+                firstname: firstName,
+                middlename: middleName,
+                lastname: lastName,
+                email: email,
+                username: username,
+                password: password,
+                role: role
             });
+            navigate('/login');
+        }
+        catch (error) {
+            console.error('Error creating user:', error);
+            setUsernameError(true);
+            setLoading(false);
+        }
     }
 
     const handleShowPassword = () => {

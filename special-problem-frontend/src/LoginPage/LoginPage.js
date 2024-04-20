@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import SmallLoading from '../Components/SmallLoading'
+import api from '../Utilities/api'
 
 function LoginPage() {
+    const navigate = useNavigate();
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState(false)
     const [loading, setLoading] = useState(false)
-    const navigate = useNavigate();
 
     const handleUsernameChange = (e) => {
         setUsername(e.target.value)
@@ -25,22 +25,23 @@ function LoginPage() {
         setShowPassword(!showPassword);
     }
 
-    const handleLogInClick = (e) => {
+    const handleLogInClick = async () => {
         setLoading(true);
-        axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/users/login', {
-            username_or_email: username,
-            password: password,
-        })
-            .then(response => {
-                const userData = response.data;
-                sessionStorage.setItem('userData', JSON.stringify(userData))
-                navigate('/home');
+        try {
+            const loginResponse = await api.post('/users/login', {
+                username_or_email: username,
+                password: password,
             })
-            .catch(error => {
-                console.error('Error logging in user:', error);
-                setError(true);
-                setLoading(false);
-            });
+            sessionStorage.setItem('user_id', loginResponse.data.user_id);
+            sessionStorage.setItem('access_token', loginResponse.data.access_token);
+            sessionStorage.setItem('role', loginResponse.data.role);
+            navigate('/home');
+        }
+        catch (error) {
+            console.error('Error logging in user:', error);
+            setError(true);
+            setLoading(false);
+        }
     }
 
     useEffect(() => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import AssessmentPageHeader from './AssessmentPageHeader'
 import AssessmentPageFooter from './AssessmentPageFooter'
-import axios from 'axios';
+import api from '../Utilities/api';
 
 function AssessmentPageLayout({ children, itemNumber, totalItems, questions, studentAssessmentId, classId, studentId }) {
     const [timeRemaining, setTimeRemaining] = useState({
@@ -13,7 +13,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessments/${studentAssessmentId}`);
+                const response = await api.get(`/assessments/${studentAssessmentId}`);
 
                 const { datetimecreated } = response.data;
                 const currentTime = new Date();

@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import colors from '../colors';
-import ResultsPageHeader from './ResultsPageHeader';
 import 'chart.js/auto';
 import { Radar } from 'react-chartjs-2';
 import { Link, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import NormalLoading from '../Components/NormalLoading';
+import api from '../Utilities/api';
+import Header from '../Components/Header';
 
 function ResultsPage() {
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
     const location = useLocation();
     const { modelInputsData, studentId, totalItems, classId } = location.state || {};
-    const [resultsData, setResultsData] = useState(modelInputsData);
+    const resultsData = modelInputsData;
+    const token = sessionStorage.getItem('access_token');
     const [results, setResults] = useState(null);
     const [comprehensiveAnalysis, setComprehensiveAnalysis] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -64,8 +63,15 @@ function ResultsPage() {
 
     useEffect(() => {
         const fetchData = async () => {
+            let totalClassScore = 0;
+            const studentIdsInClass = [];
+            const tempModelResultsArray = [];
+            const tempAllModelResultsArray = [];
+            const tempStudentAssessmentResultArray = [];
+            const studentScores = [];
+
             const updatedResultsData = await Promise.all(resultsData.map(async (result) => {
-                const predict = await axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results/predict-cri-criteria', {
+                const predict = await api.post('/model_results/predict-cri-criteria', {
                     major_category: result.majorCategory,
                     number_of_items: result.numberOfItems,
                     total_score: result.score,
@@ -78,7 +84,7 @@ function ResultsPage() {
 
             const postRequests = updatedResultsData.map(async (result) => {
                 try {
-                    await axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
+                    await api.post('/model_results', {
                         major_category: result.majorCategory,
                         number_of_items: result.numberOfItems,
                         total_score: result.score,
@@ -90,7 +96,7 @@ function ResultsPage() {
                         student_id: studentId,
                     }, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                 } catch (error) {
@@ -100,20 +106,17 @@ function ResultsPage() {
 
             await Promise.all(postRequests);
 
-            const studentIdsInClass = [];
-            const studentsInClass = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/students/classes/${classId}`, {
+            const studentsInClass = await api.get(`/students/classes/${classId}`, {
                 headers: {
-                    Authorization: `Bearer ${userObject.access_token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
             studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
 
-            const tempModelResultsArray = [];
-            const tempAllModelResultsArray = [];
             try {
-                const getModelResults = await axios.get('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results', {
+                const getModelResults = await api.get('/model_results', {
                     headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
+                        Authorization: `Bearer ${token}`
                     }
                 });
 
@@ -140,7 +143,7 @@ function ResultsPage() {
                             continue;
                         }
 
-                        await axios.put(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/model_results/${model.id}`, {
+                        await api.put(`/model_results/${model.id}`, {
                             major_category: updatedResult.majorCategory,
                             number_of_items: updatedResult.numberOfItems,
                             total_score: updatedResult.score,
@@ -152,7 +155,7 @@ function ResultsPage() {
                             student_id: studentId,
                         }, {
                             headers: {
-                                Authorization: `Bearer ${userObject.access_token}`
+                                Authorization: `Bearer ${token}`
                             }
                         });
                     } catch (error) {
@@ -166,12 +169,11 @@ function ResultsPage() {
             const totalScore = updatedResultsData.reduce((acc, result) => acc + result.score, 0);
             const percentageOfScore = ((totalScore / totalItems) * 100).toFixed(2) + "%";
 
-            const tempStudentAssessmentResultArray = [];
             for (const studentId of studentIdsInClass) {
                 try {
-                    const studentAssessmentResult = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
+                    const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                     tempStudentAssessmentResultArray.push(studentAssessmentResult.data);
@@ -182,7 +184,7 @@ function ResultsPage() {
             }
 
             try {
-                await axios.post('https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results', {
+                await api.post('/assessment_results', {
                     total_score: totalScore,
                     total_items: totalItems,
                     basic_theory_score: updatedResultsData[0].score,
@@ -197,16 +199,16 @@ function ResultsPage() {
                     student_id: studentId,
                 }, {
                     headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
+                        Authorization: `Bearer ${token}`
                     }
                 });
             } catch (error) {
-                const studentAssessmentResult = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
+                const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`, {
                     headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
+                        Authorization: `Bearer ${token}`
                     }
                 });
-                await axios.put(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/${studentAssessmentResult.data.id}`, {
+                await api.put(`/assessment_results/${studentAssessmentResult.data.id}`, {
                     total_score: totalScore,
                     total_items: totalItems,
                     basic_theory_score: updatedResultsData[0].score,
@@ -221,19 +223,17 @@ function ResultsPage() {
                     student_id: studentId,
                 }, {
                     headers: {
-                        Authorization: `Bearer ${userObject.access_token}`
+                        Authorization: `Bearer ${token}`
                     }
                 });
                 console.error("Error posting assessment results:", error);
             }
 
-            let totalClassScore = 0;
-            const studentScores = [];
             for (const studentId of studentIdsInClass) {
                 try {
-                    const studentAssessmentResult = await axios.get(`https://philnicient-backend-62b6dbc61488.herokuapp.com/api/assessment_results/students/${studentId}`, {
+                    const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`, {
                         headers: {
-                            Authorization: `Bearer ${userObject.access_token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                     totalClassScore += studentAssessmentResult.data.total_score;
@@ -318,7 +318,7 @@ function ResultsPage() {
         };
 
         fetchData();
-    }, [resultsData, studentId, totalItems, classId, userObject.access_token]);
+    }, [classId, resultsData, studentId, token, totalItems]);
 
     function getCategoryString(majorCategory) {
         const category = parseInt(majorCategory);
@@ -363,7 +363,7 @@ function ResultsPage() {
 
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
-            <ResultsPageHeader />
+            <Header />
             {loading ? (
                 <NormalLoading />
             ) : (
