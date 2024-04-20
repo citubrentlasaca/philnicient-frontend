@@ -358,7 +358,7 @@ function Homepage() {
                         <b style={{ color: colors.dark }}>Classes</b>
                         <div className="text-center w-100">
                             <div className="row row-cols-md-4 row-cols-sm-2 row-cols-1 row-gap-1">
-                                {classes.map((classData, index) => {
+                                {classes && classes.map((classData, index) => {
                                     return (
                                         <Link className="p-0" to={`/class/${classData.id}`} key={index}
                                             style={{

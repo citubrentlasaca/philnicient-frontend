@@ -26,9 +26,9 @@ function App() {
       <Router>
         <Routes>
           <Route path='/' element={<PublicRoute redirectTo="/home" component={LandingPage} />} />
-          <Route path='/login' element={<LoginPage />} />
-          <Route path='/signup' element={<SignUpPage />} />
-          <Route path='/forgot-password' element={<ForgotPasswordPage />} />
+          <Route path='/login' element={<PublicRoute redirectTo="/home" component={LoginPage} />} />
+          <Route path='/signup' element={<PublicRoute redirectTo="/home" component={SignUpPage} />} />
+          <Route path='/forgot-password' element={<PublicRoute redirectTo="/home" component={ForgotPasswordPage} />} />
           <Route path='/home' element={<PrivateRoute redirectTo="/login" component={Homepage} />} />
           <Route path='/class/:classId' element={<PrivateRoute redirectTo="/login" component={ClassPage} />} />
           <Route path='/instructions' element={<PrivateRoute redirectTo="/login" component={InstructionsPage} />} />

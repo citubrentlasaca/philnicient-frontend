@@ -8,11 +8,9 @@ import { collection, addDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 function ContentManagementPage() {
-    const userDataString = sessionStorage.getItem('userData');
-    const userObject = JSON.parse(userDataString);
-    const userData = userObject.user;
-    const [role, setRole] = useState(userData.role);
     const navigate = useNavigate();
+    const storage = getStorage(firebaseApp);
+    const role = sessionStorage.getItem('role');
     const [field, setField] = useState('Technology');
     const [majorCategory, setMajorCategory] = useState('Basic Theory');
     const [question, setQuestion] = useState('');
@@ -27,7 +25,6 @@ function ContentManagementPage() {
     const [questionDataError, setQuestionDataError] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
-    const storage = getStorage(firebaseApp);
 
     useEffect(() => {
         if (role !== 'Admin') {
