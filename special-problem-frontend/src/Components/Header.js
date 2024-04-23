@@ -2,11 +2,13 @@ import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { decrypt } from '../Utilities/utils'
 
 function Header() {
     const location = useLocation();
     const navigate = useNavigate();
     const role = sessionStorage.getItem('role');
+    const adminRole = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
 
     const handleLogoutClick = () => {
         sessionStorage.clear();
@@ -30,7 +32,7 @@ function Header() {
                         }}
                     />
                 </Link>
-                {role === 'Admin' &&
+                {adminRole === 'Admin' &&
                     <>
                         <Link to="/account-management" style={{ textDecoration: "none" }}>
                             <p style={{ color: colors.accent }}>Account Management</p>

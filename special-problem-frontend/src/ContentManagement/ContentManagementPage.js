@@ -6,11 +6,12 @@ import colors from '../colors'
 import { firestore, firebaseApp } from '../firebaseConfig.js'
 import { collection, addDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { decrypt } from '../Utilities/utils'
 
 function ContentManagementPage() {
     const navigate = useNavigate();
     const storage = getStorage(firebaseApp);
-    const role = sessionStorage.getItem('role');
+    const role = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
     const [field, setField] = useState('Technology');
     const [majorCategory, setMajorCategory] = useState('Basic Theory');
     const [question, setQuestion] = useState('');

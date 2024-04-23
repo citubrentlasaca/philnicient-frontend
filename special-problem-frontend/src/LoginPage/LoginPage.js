@@ -4,6 +4,7 @@ import logo from '../Icons/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import SmallLoading from '../Components/SmallLoading'
 import api from '../Utilities/api'
+import { encrypt } from '../Utilities/utils'
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -32,9 +33,17 @@ function LoginPage() {
                 username_or_email: username,
                 password: password,
             })
+
+            if (loginResponse.data.role === 'Admin') {
+                const encryptedRole = encrypt(loginResponse.data.role, "PHILNICIENT");
+                sessionStorage.setItem('role', encryptedRole);
+            }
+            else {
+                sessionStorage.setItem('role', loginResponse.data.role);
+            }
             sessionStorage.setItem('user_id', loginResponse.data.user_id);
             sessionStorage.setItem('access_token', loginResponse.data.access_token);
-            sessionStorage.setItem('role', loginResponse.data.role);
+
             navigate('/home');
         }
         catch (error) {

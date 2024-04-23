@@ -3,6 +3,7 @@ import colors from '../colors';
 import AssessmentPageLayout from './AssessmentPageLayout';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../Utilities/api';
+import { decrypt } from '../Utilities/utils'
 
 function AssessmentPage() {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ function AssessmentPage() {
     const { assessmentId } = useParams();
     const userId = sessionStorage.getItem('user_id');
     const role = sessionStorage.getItem('role');
+    const adminRole = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
     const token = sessionStorage.getItem('access_token');
     const [questions, setQuestions] = useState(null);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -47,7 +49,7 @@ function AssessmentPage() {
                         }
                     });
                 }
-                else if (role === 'Teacher' || role === 'Admin') {
+                else if (role === 'Teacher' || adminRole === 'Admin') {
                     navigate("/assessment-not-found")
                     console.error("Assessment not found.");
                 }
@@ -57,7 +59,7 @@ function AssessmentPage() {
             }
         }
         fetchData();
-    }, [assessmentId, navigate, userId, token, role]);
+    }, [assessmentId, navigate, userId, token, role, adminRole]);
 
     useEffect(() => {
         const fetchQuestions = async () => {

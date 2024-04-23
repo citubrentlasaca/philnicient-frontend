@@ -4,11 +4,13 @@ import colors from '../colors'
 import { Link, useNavigate } from 'react-router-dom';
 import NormalLoading from '../Components/NormalLoading';
 import api from '../Utilities/api';
+import { decrypt } from '../Utilities/utils'
 
 function Homepage() {
     const navigate = useNavigate();
     const userId = sessionStorage.getItem('user_id');
     const role = sessionStorage.getItem('role');
+    const adminRole = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
     const token = sessionStorage.getItem('access_token');
     const [loading, setLoading] = useState(true)
     const [className, setClassName] = useState('')
@@ -122,7 +124,7 @@ function Homepage() {
                     console.error('Error fetching all students:', error);
                 }
             }
-            else if (role === 'Admin') {
+            else if (adminRole === 'Admin') {
                 try {
                     const allClasses = await api.get('/classes');
 
@@ -345,7 +347,7 @@ function Homepage() {
                     )
                 )
             }
-            {role === 'Admin' && (
+            {adminRole === 'Admin' && (
                 loading ? (
                     <NormalLoading />
                 ) : (

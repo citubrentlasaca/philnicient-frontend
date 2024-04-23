@@ -4,11 +4,11 @@ import NormalLoading from '../Components/NormalLoading';
 import colors from '../colors'
 import { useNavigate } from 'react-router-dom';
 import api from '../Utilities/api';
-import { set } from 'firebase/database';
+import { decrypt } from '../Utilities/utils'
 
 function AccountManagementPage() {
     const navigate = useNavigate();
-    const role = sessionStorage.getItem('role');
+    const role = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(true);
