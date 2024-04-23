@@ -2,10 +2,11 @@ import React from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
+import { decrypt } from '../Utilities/utils'
 
 function ContentManagementHeader() {
     const navigate = useNavigate();
-    const role = sessionStorage.getItem('role');
+    const role = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
 
     const handleLogoutClick = () => {
         sessionStorage.clear();
