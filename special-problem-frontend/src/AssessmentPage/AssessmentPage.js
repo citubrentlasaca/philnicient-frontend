@@ -31,7 +31,7 @@ function AssessmentPage() {
             try {
                 await api.get(`/assessments/${assessmentId}`)
             } catch (error) {
-                console.error("Assessment does not exist", error);
+                // console.error("Assessment does not exist", error);
                 navigate("/assessment-not-found");
             }
         }
@@ -51,11 +51,11 @@ function AssessmentPage() {
                 }
                 else if (role === 'Teacher' || adminRole === 'Admin') {
                     navigate("/assessment-not-found")
-                    console.error("Assessment not found.");
+                    // console.error("Assessment not found.");
                 }
             } catch (error) {
                 navigate("/assessment-not-found")
-                console.error("Assessment not found.");
+                // console.error("Assessment not found.");
             }
         }
         fetchData();
@@ -105,11 +105,11 @@ function AssessmentPage() {
                         setLoading(false);
                     })
                     .catch(error => {
-                        console.error('Error fetching assessments:', error);
+                        // console.error('Error fetching assessments:', error);
                     });
             }
             catch (error) {
-                console.error('Error fetching questions:', error);
+                // console.error('Error fetching questions:', error);
             }
         }
 
@@ -138,7 +138,7 @@ function AssessmentPage() {
                     });
                 }
                 catch (error) {
-                    console.error('Error updating questions:', error);
+                    // console.error('Error updating questions:', error);
                 }
             }
         }, 5 * 60 * 1000);

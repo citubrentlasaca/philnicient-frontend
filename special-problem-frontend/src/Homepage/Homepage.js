@@ -45,7 +45,7 @@ function Homepage() {
             setClassCodeLoading(false)
         }
         catch (error) {
-            console.error('Error creating class:', error);
+            // console.error('Error creating class:', error);
         }
     }
 
@@ -68,11 +68,11 @@ function Homepage() {
                 navigate(0);
             }
             catch (error) {
-                console.error('Error creating student:', error);
+                // console.error('Error creating student:', error);
             }
         }
         catch (error) {
-            console.error('Error joining class:', error);
+            // console.error('Error joining class:', error);
             setClassCodeError(true)
             setButtonLoading(false)
         }
@@ -94,7 +94,7 @@ function Homepage() {
                     setLoading(false);
                 }
                 catch (error) {
-                    console.error('Error fetching all classes:', error);
+                    // console.error('Error fetching all classes:', error);
                 }
             }
             else if (role === 'Student') {
@@ -121,7 +121,7 @@ function Homepage() {
                     setLoading(false);
                 }
                 catch (error) {
-                    console.error('Error fetching all students:', error);
+                    // console.error('Error fetching all students:', error);
                 }
             }
             else if (adminRole === 'Admin') {
@@ -132,7 +132,7 @@ function Homepage() {
                     setLoading(false);
                 }
                 catch (error) {
-                    console.error('Error fetching all classes:', error);
+                    // console.error('Error fetching all classes:', error);
                 }
             }
         };

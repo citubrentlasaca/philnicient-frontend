@@ -68,7 +68,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
             await api.delete(`/assessments/${assessmentId}`);
         }
         catch (error) {
-            console.error("Error deleting assessment: ", error);
+            // console.error("Error deleting assessment: ", error);
         }
 
         navigate(`/results`, {

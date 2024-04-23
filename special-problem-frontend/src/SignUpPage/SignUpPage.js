@@ -63,7 +63,7 @@ function SignUpPage() {
             navigate('/login');
         }
         catch (error) {
-            console.error('Error creating user:', error);
+            // console.error('Error creating user:', error);
             setUsernameError(true);
             setLoading(false);
         }
