@@ -100,7 +100,7 @@ function ResultsPage() {
                         }
                     });
                 } catch (error) {
-                    console.error('An error occurred while posting data:', error);
+                    // console.error('An error occurred while posting data:', error);
                 }
             });
 
@@ -139,7 +139,7 @@ function ResultsPage() {
                     try {
                         const updatedResult = updatedResultsData.find(result => result.majorCategory === model.major_category);
                         if (!updatedResult) {
-                            console.error('No matching result found for major category:', model.major_category);
+                            // console.error('No matching result found for major category:', model.major_category);
                             continue;
                         }
 
@@ -159,11 +159,11 @@ function ResultsPage() {
                             }
                         });
                     } catch (error) {
-                        console.error('An error occurred while putting data:', error);
+                        // console.error('An error occurred while putting data:', error);
                     }
                 }
             } catch (error) {
-                console.error('An error occurred while getting model results:', error);
+                // console.error('An error occurred while getting model results:', error);
             }
 
             const totalScore = updatedResultsData.reduce((acc, result) => acc + result.score, 0);
@@ -178,7 +178,7 @@ function ResultsPage() {
                     });
                     tempStudentAssessmentResultArray.push(studentAssessmentResult.data);
                 } catch (error) {
-                    console.error("Error fetching assessment result for student ID:", studentId, error);
+                    // console.error("Error fetching assessment result for student ID:", studentId, error);
                     continue;
                 }
             }
@@ -226,7 +226,7 @@ function ResultsPage() {
                         Authorization: `Bearer ${token}`
                     }
                 });
-                console.error("Error posting assessment results:", error);
+                // console.error("Error posting assessment results:", error);
             }
 
             for (const studentId of studentIdsInClass) {
@@ -239,7 +239,7 @@ function ResultsPage() {
                     totalClassScore += studentAssessmentResult.data.total_score;
                     studentScores.push(studentAssessmentResult.data.total_score);
                 } catch (error) {
-                    console.error("Error fetching assessment result for student ID:", studentId, error);
+                    // console.error("Error fetching assessment result for student ID:", studentId, error);
                     continue;
                 }
             }

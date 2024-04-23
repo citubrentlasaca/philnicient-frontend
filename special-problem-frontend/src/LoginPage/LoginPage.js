@@ -47,7 +47,7 @@ function LoginPage() {
             navigate('/home');
         }
         catch (error) {
-            console.error('Error logging in user:', error);
+            // console.error('Error logging in user:', error);
             setError(true);
             setLoading(false);
         }

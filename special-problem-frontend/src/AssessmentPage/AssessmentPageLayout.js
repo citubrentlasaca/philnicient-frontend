@@ -31,7 +31,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
                     seconds: remainingSeconds,
                 });
             } catch (error) {
-                console.error('Error fetching data:', error);
+                // console.error('Error fetching data:', error);
             }
         };
 

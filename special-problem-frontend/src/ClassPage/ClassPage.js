@@ -112,7 +112,7 @@ function ClassPage() {
             try {
                 await api.get(`/classes/${classId}`)
             } catch (error) {
-                console.error("Class does not exist", error);
+                // console.error("Class does not exist", error);
                 navigate("/class-not-found");
             }
         }
@@ -134,12 +134,12 @@ function ClassPage() {
                     const classData = await api.get(`/classes/${classId}`)
                     if (userId !== classData.data.teacher_id) {
                         navigate("/class-not-found")
-                        console.error("Teacher does not belong to this class");
+                        // console.error("Teacher does not belong to this class");
                     }
                 }
             } catch (error) {
                 navigate("/class-not-found")
-                console.error("Teacher/Student does not belong to this class");
+                // console.error("Teacher/Student does not belong to this class");
             }
         }
 
@@ -193,7 +193,7 @@ function ClassPage() {
                 setLoading(false);
             }
             catch (error) {
-                console.error("Error fetching students in class:", error);
+                // console.error("Error fetching students in class:", error);
             }
         };
 
@@ -222,7 +222,7 @@ function ClassPage() {
                     studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
                 }
                 catch (error) {
-                    console.error("Error fetching student ID:", error);
+                    // console.error("Error fetching student ID:", error);
                 }
 
                 try {
@@ -234,7 +234,7 @@ function ClassPage() {
                     studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
                 }
                 catch (error) {
-                    console.error("Error fetching students in class:", error);
+                    // console.error("Error fetching students in class:", error);
                 }
 
                 try {
@@ -246,7 +246,7 @@ function ClassPage() {
                     assessmentResponseData = assessmentResponse.data;
                 }
                 catch (error) {
-                    console.error("Error fetching assessment result for student ID:", studentId, error);
+                    // console.error("Error fetching assessment result for student ID:", studentId, error);
                 }
 
                 try {
@@ -269,7 +269,7 @@ function ClassPage() {
                     }
                 }
                 catch (error) {
-                    console.error("Error fetching model results:", error);
+                    // console.error("Error fetching model results:", error);
                 }
 
                 tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
@@ -285,7 +285,7 @@ function ClassPage() {
                         totalClassScore += studentAssessmentResult.data.total_score;
                         studentScores.push(studentAssessmentResult.data.total_score);
                     } catch (error) {
-                        console.error("Error fetching assessment result for student ID:", studentId, error);
+                        // console.error("Error fetching assessment result for student ID:", studentId, error);
                         continue;
                     }
                 }
@@ -374,7 +374,7 @@ function ClassPage() {
                 setLoading(false);
                 setPreviousDataLoading(false);
             } catch (error) {
-                console.error('Error fetching data:', error);
+                // console.error('Error fetching data:', error);
                 setPreviousDataLoading(false);
             }
         };
@@ -393,7 +393,7 @@ function ClassPage() {
                     studentsResponse.data.forEach(student => studentsInClass.push(student));
                 }
                 catch (error) {
-                    console.error("Error fetching students in class:", error);
+                    // console.error("Error fetching students in class:", error);
                 }
 
                 for (const student of studentsInClass) {
@@ -415,12 +415,12 @@ function ClassPage() {
                             );
                         }
                         catch (error) {
-                            console.error("Error fetching user data for student ID:", student.student_id, error);
+                            // console.error("Error fetching user data for student ID:", student.student_id, error);
                             continue;
                         }
                     }
                     catch (error) {
-                        console.error("Error fetching assessment result for student ID:", student, error);
+                        // console.error("Error fetching assessment result for student ID:", student, error);
                         continue;
                     }
                 }
@@ -433,7 +433,7 @@ function ClassPage() {
                 setLoading(false);
             }
             catch (error) {
-                console.error("Error fetching data:", error);
+                // console.error("Error fetching data:", error);
                 setTeacherDataLoading(false);
                 setHasTeacherData(false);
                 setLoading(false);
@@ -526,7 +526,7 @@ function ClassPage() {
                         studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
                     }
                     catch (error) {
-                        console.error("Error fetching students in class:", error);
+                        // console.error("Error fetching students in class:", error);
                     }
 
                     try {
@@ -558,13 +558,13 @@ function ClassPage() {
                                 });
                             }
                             catch (error) {
-                                console.error("Error creating question:", error);
+                                // console.error("Error creating question:", error);
                                 continue;
                             }
                         }
                     }
                     catch (error) {
-                        console.error("Error creating assessment:", error);
+                        // console.error("Error creating assessment:", error);
                     }
 
                     navigate(`/assessment/${studentAssessmentId}`, {
@@ -575,7 +575,7 @@ function ClassPage() {
                     });
                 }
             } catch (error) {
-                console.error("Error fetching data:", error);
+                // console.error("Error fetching data:", error);
             }
         };
 
@@ -599,7 +599,7 @@ function ClassPage() {
             });
         }
         catch (error) {
-            console.error("Error fetching data:", error);
+            // console.error("Error fetching data:", error);
         }
     }
 
@@ -621,7 +621,7 @@ function ClassPage() {
                 studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
             }
             catch (error) {
-                console.error("Error fetching students in class:", error);
+                // console.error("Error fetching students in class:", error);
             }
 
             try {
@@ -633,7 +633,7 @@ function ClassPage() {
                 assessmentResponseData = assessmentResponse.data;
             }
             catch (error) {
-                console.error("Error fetching assessment result for student ID:", clickedStudentId, error);
+                // console.error("Error fetching assessment result for student ID:", clickedStudentId, error);
             }
 
             try {
@@ -656,7 +656,7 @@ function ClassPage() {
                 }
             }
             catch (error) {
-                console.error("Error fetching model results:", error);
+                // console.error("Error fetching model results:", error);
             }
 
             tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
@@ -672,7 +672,7 @@ function ClassPage() {
                     totalClassScore += studentAssessmentResult.data.total_score;
                     studentScores.push(studentAssessmentResult.data.total_score);
                 } catch (error) {
-                    console.error("Error fetching assessment result for student ID:", studentId, error);
+                    // console.error("Error fetching assessment result for student ID:", studentId, error);
                     continue;
                 }
             }
@@ -761,7 +761,7 @@ function ClassPage() {
             setStudentDataLoading(false);
         }
         catch (error) {
-            console.error("Error fetching data:", error);
+            // console.error("Error fetching data:", error);
         }
     }
 
@@ -781,7 +781,7 @@ function ClassPage() {
             document.body.removeChild(textarea);
             setHasCopied(true);
         } catch (error) {
-            console.error("Error fetching data:", error);
+            // console.error("Error fetching data:", error);
         }
     };
 
@@ -800,7 +800,7 @@ function ClassPage() {
                 studentsInClassResponse.data.forEach(student => studentIdsInClass.push(student.id));
             }
             catch (error) {
-                console.error("Error fetching students in class:", error);
+                // console.error("Error fetching students in class:", error);
             }
 
             try {
@@ -819,7 +819,7 @@ function ClassPage() {
                 }
             }
             catch (error) {
-                console.error("Error fetching model results:", error);
+                // console.error("Error fetching model results:", error);
             }
 
             tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
@@ -851,7 +851,7 @@ function ClassPage() {
             }));
         }
         catch (error) {
-            console.error("Error fetching data:", error);
+            // console.error("Error fetching data:", error);
         }
     }
 

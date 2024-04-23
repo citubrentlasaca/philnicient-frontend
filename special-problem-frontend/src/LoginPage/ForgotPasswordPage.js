@@ -51,7 +51,7 @@ function ForgotPasswordPage() {
             })
         }
         catch (error) {
-            console.error('Error sending code:', error);
+            // console.error('Error sending code:', error);
         }
     }
 
@@ -71,7 +71,7 @@ function ForgotPasswordPage() {
                 navigate('/login');
             }
             catch (error) {
-                console.error('Error resetting password:', error);
+                // console.error('Error resetting password:', error);
                 setCodeError(true);
                 setLoading(false);
             }

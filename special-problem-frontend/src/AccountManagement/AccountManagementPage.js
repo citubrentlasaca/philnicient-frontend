@@ -32,7 +32,7 @@ function AccountManagementPage() {
                 setFilteredUsers(filteredUsers);
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching users:', error);
+                // console.error('Error fetching users:', error);
             }
         }
 
@@ -63,7 +63,7 @@ function AccountManagementPage() {
             navigate(0);
         }
         catch (error) {
-            console.error('Error deleting user:', error);
+            // console.error('Error deleting user:', error);
         }
     }
 

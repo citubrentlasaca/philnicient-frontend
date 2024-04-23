@@ -206,7 +206,7 @@ function ContentManagementPage() {
                     handleClear();
                 } catch (e) {
                     setSubmitLoading(false);
-                    console.error("Error adding document: ", e);
+                    // console.error("Error adding document: ", e);
                 }
             } else {
                 if (!hasCorrectLength) {
