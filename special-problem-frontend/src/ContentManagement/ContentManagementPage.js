@@ -11,7 +11,7 @@ import { decrypt } from '../Utilities/utils'
 function ContentManagementPage() {
     const navigate = useNavigate();
     const storage = getStorage(firebaseApp);
-    const role = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
+    const role = decrypt(sessionStorage.getItem('role'));
     const [field, setField] = useState('Technology');
     const [majorCategory, setMajorCategory] = useState('Basic Theory');
     const [question, setQuestion] = useState('');

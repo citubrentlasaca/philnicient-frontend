@@ -1,16 +1,26 @@
-import React from 'react'
+import React, { useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
 import { decrypt } from '../Utilities/utils'
+import api from '../Utilities/api';
+import SmallLoading from '../Components/SmallLoading'
 
 function ContentManagementHeader() {
     const navigate = useNavigate();
-    const role = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
+    const role = decrypt(sessionStorage.getItem('role'));
+    const [loading, setLoading] = useState(false);
 
-    const handleLogoutClick = () => {
-        sessionStorage.clear();
-        navigate('/login');
+    const handleLogoutClick = async () => {
+        try {
+            setLoading(true);
+            await api.post('/users/logout');
+            sessionStorage.clear();
+            navigate('/login');
+        } catch (error) {
+            //console.error(error);
+            setLoading(false);
+        }
     }
 
     return (
@@ -50,8 +60,11 @@ function ContentManagementHeader() {
                     color: colors.darkest,
                 }}
             >
-                Logout
-            </button>
+                {loading ? (
+                    <SmallLoading />
+                ) : (
+                    "Logout"
+                )}            </button>
         </div>
     )
 }

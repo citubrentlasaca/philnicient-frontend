@@ -1,18 +1,38 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import colors from '../colors'
 import logo from '../Icons/logo.png'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { decrypt } from '../Utilities/utils'
+import api from '../Utilities/api';
+import SmallLoading from '../Components/SmallLoading'
 
 function Header() {
     const location = useLocation();
     const navigate = useNavigate();
-    const role = sessionStorage.getItem('role');
-    const adminRole = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
+    const [role, setRole] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleLogoutClick = () => {
-        sessionStorage.clear();
-        navigate('/login');
+    useEffect(() => {
+        const role = sessionStorage.getItem('role');
+        if (role !== "Teacher" && role !== "Student") {
+            const adminRole = decrypt(role)
+            setRole(adminRole)
+        }
+        else {
+            setRole(role)
+        }
+    }, [role]);
+
+    const handleLogoutClick = async () => {
+        try {
+            setLoading(true);
+            await api.post('/users/logout');
+            sessionStorage.clear();
+            navigate('/login');
+        } catch (error) {
+            //console.error(error);
+            setLoading(false);
+        }
     }
 
     return (
@@ -32,7 +52,7 @@ function Header() {
                         }}
                     />
                 </Link>
-                {adminRole === 'Admin' &&
+                {role === 'Admin' &&
                     <>
                         <Link to="/account-management" style={{ textDecoration: "none" }}>
                             <p style={{ color: colors.accent }}>Account Management</p>
@@ -59,7 +79,11 @@ function Header() {
                     color: colors.darkest,
                 }}
             >
-                Logout
+                {loading ? (
+                    <SmallLoading />
+                ) : (
+                    "Logout"
+                )}
             </button>
         </div>
     )

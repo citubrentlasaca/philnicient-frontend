@@ -8,7 +8,7 @@ import { decrypt } from '../Utilities/utils'
 
 function AccountManagementPage() {
     const navigate = useNavigate();
-    const role = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
+    const role = decrypt(sessionStorage.getItem('role'));
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(true);

@@ -11,13 +11,22 @@ function AssessmentPage() {
     const { classId, studentId } = location.state || {};
     const { assessmentId } = useParams();
     const userId = sessionStorage.getItem('user_id');
-    const role = sessionStorage.getItem('role');
-    const adminRole = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
-    const token = sessionStorage.getItem('access_token');
+    const [role, setRole] = useState('');
     const [questions, setQuestions] = useState(null);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [certaintyIndex, setCertaintyIndex] = useState(0);
     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const role = sessionStorage.getItem('role');
+        if (role !== "Teacher" && role !== "Student") {
+            const adminRole = decrypt(role)
+            setRole(adminRole)
+        }
+        else {
+            setRole(role)
+        }
+    }, [role]);
 
     useEffect(() => {
         const modalBackdrop = document.querySelector('.modal-backdrop.fade.show');
@@ -43,13 +52,9 @@ function AssessmentPage() {
         const fetchData = async () => {
             try {
                 if (role === 'Student') {
-                    await api.get(`/students/${userId}/assessment/${assessmentId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    await api.get(`/students/${userId}/assessment/${assessmentId}`);
                 }
-                else if (role === 'Teacher' || adminRole === 'Admin') {
+                else if (role === 'Teacher' || role === 'Admin') {
                     navigate("/assessment-not-found")
                     // console.error("Assessment not found.");
                 }
@@ -59,110 +64,63 @@ function AssessmentPage() {
             }
         }
         fetchData();
-    }, [assessmentId, navigate, userId, token, role, adminRole]);
+    }, [assessmentId, navigate, role, userId]);
 
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
                 const assessmentResponse = await api.get(`/assessments/${assessmentId}`)
                 const questionsArray = assessmentResponse.data.questions;
-                const promises = questionsArray.map(assessment =>
-                    api.get(`/questions/${assessment}`))
+                const questionData = [];
+                for (const question of questionsArray) {
+                    try {
+                        const questionResponse = await api.get(`/questions/${question}`);
+                        questionData.push(questionResponse.data);
+                    } catch (error) {
+                        // console.error('Error fetching questions:', error);
+                    }
+                }
 
-                Promise.all(promises)
-                    .then(responses => {
-                        const formattedQuestions = responses.map(response => {
-                            const {
-                                question,
-                                figure,
-                                choices,
-                                answer,
-                                major_category: majorCategory,
-                                student_answer: studentAnswer,
-                                student_cri: studentCRI,
-                                is_for_review: isForReview,
-                                time
-                            } = response.data;
+                setInterval(async () => {
+                    try {
+                        await api.put('/questions/update-multiple-questions', questionData);
+                        console.log('Questions updated');
+                    } catch (error) {
+                        //console.error('Error updating questions:', error);
+                    }
+                }, 60000);
 
-                            return {
-                                question,
-                                figure,
-                                choices,
-                                answer,
-                                majorCategory,
-                                studentAnswer,
-                                studentCRI,
-                                isForReview,
-                                time
-                            };
-                        });
-
-                        setQuestions(formattedQuestions);
-                        setSelectedQuestion({
-                            ...formattedQuestions[0],
-                            itemNumber: 1
-                        });
-                        setLoading(false);
-                    })
-                    .catch(error => {
-                        // console.error('Error fetching assessments:', error);
-                    });
-            }
-            catch (error) {
+                setQuestions(questionData);
+                setSelectedQuestion({
+                    ...questionData[0],
+                    itemNumber: 1
+                });
+                setLoading(false);
+            } catch (error) {
                 // console.error('Error fetching questions:', error);
             }
         }
 
         fetchQuestions();
-    }, [assessmentId]);
+    }, []);
 
-    useEffect(() => {
-        const intervalId = setInterval(async () => {
-            for (const question of questions) {
-                try {
-                    await api.put(`/questions/${question.id}`, {
-                        question: question.question,
-                        figure: question.figure,
-                        choices: question.choices,
-                        answer: question.answer,
-                        major_category: question.majorCategory,
-                        student_answer: question.studentAnswer,
-                        student_cri: question.studentCRI,
-                        is_for_review: question.isForReview,
-                        time: question.time,
-                        assessment_id: question.assessmentId
-                    }, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-                }
-                catch (error) {
-                    // console.error('Error updating questions:', error);
-                }
-            }
-        }, 5 * 60 * 1000);
-
-        return () => clearInterval(intervalId);
-    }, [questions, token]);
-
-    const getCertaintyLabel = (studentCRI) => {
-        if (studentCRI === 0) {
+    const getCertaintyLabel = (student_cri) => {
+        if (student_cri === 0) {
             return "Certainty of Response Index: Totally Guessed Answer";
         }
-        else if (studentCRI === 1) {
+        else if (student_cri === 1) {
             return "Certainty of Response Index: Almost Guess";
         }
-        else if (studentCRI === 2) {
+        else if (student_cri === 2) {
             return "Certainty of Response Index: Not Sure";
         }
-        else if (studentCRI === 3) {
+        else if (student_cri === 3) {
             return "Certainty of Response Index: Sure";
         }
-        else if (studentCRI === 4) {
+        else if (student_cri === 4) {
             return "Certainty of Response Index: Almost Certain";
         }
-        else if (studentCRI === 5) {
+        else if (student_cri === 5) {
             return "Certainty of Response Index: Certain";
         }
     }
@@ -173,11 +131,11 @@ function AssessmentPage() {
             figure: question.figure,
             choices: question.choices,
             answer: question.answer,
-            majorCategory: question.majorCategory,
+            major_category: question.major_category,
             itemNumber: index + 1,
-            studentAnswer: question.studentAnswer,
-            studentCRI: question.studentCRI,
-            isForReview: question.isForReview,
+            student_answer: question.student_answer,
+            student_cri: question.student_cri,
+            is_for_review: question.is_for_review,
             time: question.time,
         });
     };
@@ -194,14 +152,14 @@ function AssessmentPage() {
             ));
 
             if (selectedQuestionIndex !== -1) {
-                updatedQuestions[selectedQuestionIndex].studentAnswer = selectedChoice;
+                updatedQuestions[selectedQuestionIndex].student_answer = selectedChoice;
             }
             return updatedQuestions;
         });
 
         setSelectedQuestion((prevQuestion) => ({
             ...prevQuestion,
-            studentAnswer: selectedChoice,
+            student_answer: selectedChoice,
         }));
     };
 
@@ -214,11 +172,11 @@ function AssessmentPage() {
         );
 
         if (index !== -1) {
-            updatedQuestions[index].isForReview = !updatedQuestions[index].isForReview;
+            updatedQuestions[index].is_for_review = !updatedQuestions[index].is_for_review;
 
             setSelectedQuestion((prevSelectedQuestion) => ({
                 ...prevSelectedQuestion,
-                isForReview: !prevSelectedQuestion.isForReview,
+                is_for_review: !prevSelectedQuestion.is_for_review,
             }));
 
             setQuestions(updatedQuestions);
@@ -237,14 +195,14 @@ function AssessmentPage() {
             ));
 
             if (selectedQuestionIndex !== -1) {
-                updatedQuestions[selectedQuestionIndex].studentCRI = newCertaintyIndex;
+                updatedQuestions[selectedQuestionIndex].student_cri = newCertaintyIndex;
             }
             return updatedQuestions;
         });
 
         setSelectedQuestion((prevQuestion) => ({
             ...prevQuestion,
-            studentCRI: newCertaintyIndex,
+            student_cri: newCertaintyIndex,
         }));
 
         setCertaintyIndex(newCertaintyIndex);
@@ -318,9 +276,9 @@ function AssessmentPage() {
                                                     width: "50px",
                                                     cursor: "pointer",
                                                     backgroundColor:
-                                                        question.isForReview
+                                                        question.is_for_review
                                                             ? colors.wrong
-                                                            : question.studentAnswer === null
+                                                            : question.student_answer === null
                                                                 ? colors.light
                                                                 : colors.correct,
                                                 }}
@@ -340,7 +298,7 @@ function AssessmentPage() {
                         >
                             <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-start gap-2'>
                                 <div className="form-check">
-                                    <input className="form-check-input" type="checkbox" id="flexCheckDefault" checked={selectedQuestion.isForReview} onChange={handleCheckboxChange} />
+                                    <input className="form-check-input" type="checkbox" id="flexCheckDefault" checked={selectedQuestion.is_for_review} onChange={handleCheckboxChange} />
                                     <label className="form-check-label" htmlFor="flexCheckDefault">
                                         Mark as For Review
                                     </label>
@@ -357,7 +315,7 @@ function AssessmentPage() {
                                 )}
                                 {selectedQuestion && selectedQuestion.choices.map((choice, index) => {
                                     const radioButtonId = `flexRadioDefault${index + 1}`;
-                                    const isUserAnswer = selectedQuestion.studentAnswer === choice;
+                                    const isUserAnswer = selectedQuestion.student_answer === choice;
 
                                     return (
                                         <div key={index} className="form-check mb-0 d-table">
@@ -391,7 +349,7 @@ function AssessmentPage() {
                                         borderRadius: "10px",
                                     }}
                                 >
-                                    <label htmlFor="customRange3" className="form-label w-100 text-center" style={{ color: colors.light }}>{getCertaintyLabel(selectedQuestion.studentCRI)}</label>
+                                    <label htmlFor="customRange3" className="form-label w-100 text-center" style={{ color: colors.light }}>{getCertaintyLabel(selectedQuestion.student_cri)}</label>
                                     <input
                                         type="range"
                                         className="form-range"
@@ -399,7 +357,7 @@ function AssessmentPage() {
                                         max="5"
                                         step="1"
                                         id="customRange3"
-                                        value={selectedQuestion.studentCRI}
+                                        value={selectedQuestion.student_cri}
                                         onChange={handleCertaintyChange}
                                     />
 
