@@ -69,16 +69,12 @@ function AssessmentPage() {
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const assessmentResponse = await api.get(`/assessments/${assessmentId}`)
-                const questionsArray = assessmentResponse.data.questions;
-                const questionData = [];
-                for (const question of questionsArray) {
-                    try {
-                        const questionResponse = await api.get(`/questions/${question}`);
-                        questionData.push(questionResponse.data);
-                    } catch (error) {
-                        // console.error('Error fetching questions:', error);
-                    }
+                let questionData = [];
+                try {
+                    const questions = await api.get(`/questions/assessment/${assessmentId}`);
+                    questionData = questions.data;
+                } catch (error) {
+                    // console.error('Error fetching questions:', error);
                 }
 
                 setInterval(async () => {
