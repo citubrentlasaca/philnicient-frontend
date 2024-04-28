@@ -73,6 +73,7 @@ function Header() {
             <button className="btn btn-primary" type="button" onClick={handleLogoutClick}
                 style={{
                     width: "100px",
+                    height: "40px",
                     borderRadius: "10px",
                     backgroundColor: colors.accent,
                     borderColor: colors.accent,
