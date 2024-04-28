@@ -84,7 +84,6 @@ function AssessmentPage() {
                 setInterval(async () => {
                     try {
                         await api.put('/questions/update-multiple-questions', questionData);
-                        console.log('Questions updated');
                     } catch (error) {
                         //console.error('Error updating questions:', error);
                     }

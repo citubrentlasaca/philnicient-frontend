@@ -9,7 +9,8 @@ import { Chart } from 'react-chartjs-2';
 import NormalLoading from '../Components/NormalLoading.js';
 import Header from '../Components/Header.js';
 import api from '../Utilities/api.js';
-import { encrypt } from '../Utilities/utils.js';
+import { decrypt, encrypt } from '../Utilities/utils.js';
+import SmallLoading from '../Components/SmallLoading.js';
 
 function ClassPage() {
     const navigate = useNavigate();
@@ -33,6 +34,9 @@ function ClassPage() {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [selectedStudentLoading, setSelectedStudentLoading] = useState(true);
     const [hasCopied, setHasCopied] = useState(false);
+    const [ongoingAssessments, setOngoingAssessments] = useState(null);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [submitAllLoading, setSubmitAllLoading] = useState(false);
     const [scoreDistribution, setScoreDistribution] = useState({
         labels: [
             'Basic Theory',
@@ -104,6 +108,43 @@ function ClassPage() {
             }
         }
     };
+
+    useEffect(() => {
+        const fetchOngoingAssessments = async () => {
+            try {
+                const assessments = await api.get(`/assessments/${classId}/assessments`);
+                const ongoingAssessments = [];
+                for (const assessment of assessments.data) {
+                    try {
+                        if (assessment.is_submitted === true) {
+                            const student = await api.get(`/students/${assessment.student_id}`);
+                            try {
+                                const user = await api.get(`/users/${student.data.student_id}`);
+                                ongoingAssessments.push({
+                                    ...assessment,
+                                    studentName: user.data.firstname + " " + user.data.middlename + " " + user.data.lastname,
+                                });
+                            } catch (error) {
+                                // console.error("Error fetching user data:", error);
+                            }
+                        }
+                    }
+                    catch (error) {
+                        // console.error("Error fetching student data:", error);
+                    }
+                }
+                if (ongoingAssessments.length > 0) {
+                    setOngoingAssessments(ongoingAssessments);
+                }
+            } catch (error) {
+                // console.error("Error fetching ongoing assessments:", error);
+            }
+        }
+
+        if (role === "Teacher") {
+            fetchOngoingAssessments();
+        }
+    }, []);
 
     useEffect(() => {
         const fetchClass = async () => {
@@ -758,6 +799,188 @@ function ClassPage() {
         }
     }
 
+    const handleSubmitAssessment = async (questions, student_id, assessment_id) => {
+        try {
+            setSubmitLoading(true);
+            const total_items = questions.length;
+            let total_score = 0;
+            let basic_theory_score = 0;
+            let computer_systems_score = 0;
+            let technical_elements_score = 0;
+            let development_techniques_score = 0;
+            let project_management_score = 0;
+            let service_management_score = 0;
+            let system_strategy_score = 0;
+            let management_strategy_score = 0;
+            let corporate_legal_affairs_score = 0;
+            let teacher_id;
+            const categoryScores = {
+                "Basic Theory": basic_theory_score,
+                "Computer Systems": computer_systems_score,
+                "Technical Elements": technical_elements_score,
+                "Development Techniques": development_techniques_score,
+                "Project Management": project_management_score,
+                "Service Management": service_management_score,
+                "System Strategy": system_strategy_score,
+                "Management Strategy": management_strategy_score,
+                "Corporate & Legal Affairs": corporate_legal_affairs_score
+            };
+            const questionsData = [];
+            const categoryToInteger = {
+                "Basic Theory": 1,
+                "Computer Systems": 2,
+                "Technical Elements": 3,
+                "Development Techniques": 4,
+                "Project Management": 5,
+                "Service Management": 6,
+                "System Strategy": 7,
+                "Management Strategy": 8,
+                "Corporate & Legal Affairs": 9
+            };
+            const forPrediction = [];
+
+            for (const question of questions) {
+                try {
+                    const questionResponse = await api.get(`/questions/${question}`);
+                    const answer = decrypt(questionResponse.data.answer);
+                    if (answer === questionResponse.data.student_answer) {
+                        total_score++;
+                        const majorCategory = questionResponse.data.major_category;
+                        categoryScores[majorCategory]++;
+                    }
+                    questionsData.push(questionResponse.data);
+                } catch (error) {
+                    // console.error('Error fetching questions:', error);
+                }
+            }
+
+            try {
+                const classResponse = await api.get(`/classes/${classId}`);
+                teacher_id = classResponse.data.teacher_id;
+            } catch (error) {
+                // console.error('Error fetching teacher ID:', error);
+            }
+
+            for (const category in categoryToInteger) {
+                let major_category = categoryToInteger[category];
+                let number_of_items = 0;
+                let total_score = 0;
+                let total_time_taken = 0;
+                let total_student_cri = 0;
+
+                for (const question of questionsData) {
+                    if (question.major_category === category) {
+                        number_of_items++;
+                        total_score += question.student_answer === decrypt(question.answer) ? 1 : 0;
+                        total_time_taken += question.time;
+                        total_student_cri += question.student_cri;
+                    }
+                }
+
+                const average_cri = number_of_items === 0 ? 0 : parseFloat((total_student_cri / number_of_items).toFixed(1));
+
+                forPrediction.push({
+                    major_category,
+                    number_of_items,
+                    total_score,
+                    total_time_taken,
+                    average_cri
+                });
+            }
+
+            try {
+                await api.post('/assessment_results', {
+                    total_items,
+                    total_score,
+                    basic_theory_score: categoryScores['Basic Theory'],
+                    computer_systems_score: categoryScores['Computer Systems'],
+                    technical_elements_score: categoryScores['Technical Elements'],
+                    development_techniques_score: categoryScores['Development Techniques'],
+                    project_management_score: categoryScores['Project Management'],
+                    service_management_score: categoryScores['Service Management'],
+                    system_strategy_score: categoryScores['System Strategy'],
+                    management_strategy_score: categoryScores['Management Strategy'],
+                    corporate_legal_affairs_score: categoryScores['Corporate & Legal Affairs'],
+                    student_id,
+                    teacher_id
+                });
+            } catch (error) {
+                const assessment = await api.get(`/assessment_results/students/${student_id}`);
+                const assessmentResultId = assessment.data.id;
+                try {
+                    await api.put(`/assessment_results/${assessmentResultId}`, {
+                        total_items,
+                        total_score,
+                        basic_theory_score: categoryScores['Basic Theory'],
+                        computer_systems_score: categoryScores['Computer Systems'],
+                        technical_elements_score: categoryScores['Technical Elements'],
+                        development_techniques_score: categoryScores['Development Techniques'],
+                        project_management_score: categoryScores['Project Management'],
+                        service_management_score: categoryScores['Service Management'],
+                        system_strategy_score: categoryScores['System Strategy'],
+                        management_strategy_score: categoryScores['Management Strategy'],
+                        corporate_legal_affairs_score: categoryScores['Corporate & Legal Affairs'],
+                        student_id,
+                        teacher_id
+                    });
+                } catch (error) {
+                    // console.error('Error updating assessment result:', error);
+                }
+                // console.error('Error creating assessment result:', error);
+            }
+
+            for (const prediction of forPrediction) {
+                try {
+                    const predictionResponse = await api.post('/model_results/predict-cri-criteria', prediction);
+                    prediction.understanding_level = predictionResponse.data.understanding_level;
+                    prediction.cri_criteria = predictionResponse.data.predicted_cri_criteria;
+                    prediction.accuracy = predictionResponse.data.accuracy;
+                    prediction.student_id = student_id;
+                    prediction.teacher_id = teacher_id;
+                    try {
+                        const modelResult = await api.get(`/model_results/students/${student_id}/major-categories/${prediction.major_category}`);
+                        const modelResultId = modelResult.data.id;
+                        prediction.id = modelResultId;
+                    } catch (error) {
+                        // console.error('Error fetching model result:', error);
+                    }
+                } catch (error) {
+                    // console.error('Error predicting CRI criteria:', error);
+                }
+            }
+
+            try {
+                await api.post('/model_results/create', forPrediction);
+            } catch (error) {
+                try {
+                    await api.put('/model_results/update-multiple-model-results', forPrediction);
+                } catch (error) {
+                    // console.error('Error updating model results:', error);
+                }
+                // console.error('Error creating model results:', error);
+            }
+
+            try {
+                await api.delete(`/assessments/${assessment_id}`);
+            } catch (error) {
+                // console.error('Error deleting assessment:', error);
+            }
+
+            setSubmitLoading(false);
+        } catch (error) {
+            // console.error('Error submitting assessment:', error);
+            setSubmitLoading(false);
+        }
+    }
+
+    const handleSubmitAllAssessments = async () => {
+        setSubmitAllLoading(true);
+        for (const assessment of ongoingAssessments) {
+            await handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id);
+        }
+        navigate(0);
+    }
+
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
             <div className="modal fade" id="generateAssessmentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -765,15 +988,17 @@ function ClassPage() {
                     <div className="modal-content">
                         <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
                             <p>Generating assessment...</p>
-                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                <div className="spinner-border" role="status"
-                                    style={{
-                                        color: colors.accent
-                                    }}
-                                >
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
+                            <NormalLoading />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="modal fade" id="calculateAllResultsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
+                            <p>Currently processing the results. It may take some time due to the complexity of the calculations involved. Please refrain from closing this page or refreshing it, as doing so may interrupt the processing of your assessments and delay the results further.</p>
+                            <NormalLoading />
                         </div>
                     </div>
                 </div>
@@ -830,7 +1055,7 @@ function ClassPage() {
                                 </button>
                             ) : (
                                 assessmentForReview ? (
-                                    <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target="#generateAssessmentModal" disabled
+                                    <button className='btn btn-primary' disabled
                                         style={{
                                             color: colors.dark,
                                             backgroundColor: colors.accent,
@@ -884,7 +1109,7 @@ function ClassPage() {
                                 </button>
                             ) : (
                                 assessmentForReview ? (
-                                    <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target="#generateAssessmentModal" disabled
+                                    <button className='btn btn-primary' disabled
                                         style={{
                                             color: colors.dark,
                                             backgroundColor: colors.accent,
@@ -996,31 +1221,75 @@ function ClassPage() {
                                 </div>
                             </div>
                             {role === "Teacher" && (
-                                <div className='w-50 d-flex flex-column justify-content-center align-items-center gap-2'>
-                                    <h3 className='mb-0'
-                                        style={{
-                                            fontFamily: "Montserrat",
-                                            fontWeight: "900",
-                                            color: colors.dark,
-                                        }}
-                                    >
-                                        Ongoing Assessments
-                                    </h3>
-                                    <table className="table align-middle text-center">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Name</th>
-                                                <th scope="col">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Name</td>
-                                                <td>Action</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                ongoingAssessments && (
+                                    <div className='w-50 d-flex flex-column justify-content-center align-items-center gap-2'>
+                                        <h3 className='mb-0'
+                                            style={{
+                                                fontFamily: "Montserrat",
+                                                fontWeight: "900",
+                                                color: colors.dark,
+                                            }}
+                                        >
+                                            Submitted Assessments
+                                        </h3>
+                                        <table className="table align-middle text-center">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Name</th>
+                                                    <th scope="col">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {ongoingAssessments.length > 0 && (
+                                                    <tr>
+                                                        <td></td>
+                                                        <td>
+                                                            <button className="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#calculateAllResultsModal" onClick={handleSubmitAllAssessments}
+                                                                style={{
+                                                                    width: "200px",
+                                                                    height: "40px",
+                                                                    borderRadius: "10px",
+                                                                    backgroundColor: colors.accent,
+                                                                    borderColor: colors.accent,
+                                                                    color: colors.darkest,
+                                                                }}
+                                                            >
+                                                                {submitAllLoading ? (
+                                                                    <SmallLoading />
+                                                                ) : (
+                                                                    <p>Calculate All Results</p>
+                                                                )}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {ongoingAssessments && ongoingAssessments.map((assessment, index) => (
+                                                    <tr key={index}>
+                                                        <td>{assessment.studentName}</td>
+                                                        <td>
+                                                            <button className="btn btn-primary" type="button" onClick={() => handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id)}
+                                                                style={{
+                                                                    width: "200px",
+                                                                    height: "40px",
+                                                                    borderRadius: "10px",
+                                                                    backgroundColor: colors.accent,
+                                                                    borderColor: colors.accent,
+                                                                    color: colors.darkest,
+                                                                }}
+                                                            >
+                                                                {submitLoading ? (
+                                                                    <SmallLoading />
+                                                                ) : (
+                                                                    <p>Calculate Result</p>
+                                                                )}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )
                             )}
                             {role === "Teacher" && (
                                 <button className='btn btn-primary' onClick={copyClassCode}
