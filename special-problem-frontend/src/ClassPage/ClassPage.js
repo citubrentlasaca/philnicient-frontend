@@ -976,9 +976,8 @@ function ClassPage() {
     const handleSubmitAllAssessments = async () => {
         setSubmitAllLoading(true);
         for (const assessment of ongoingAssessments) {
-            await handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id);
+            handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id);
         }
-        navigate(0);
     }
 
     return (
