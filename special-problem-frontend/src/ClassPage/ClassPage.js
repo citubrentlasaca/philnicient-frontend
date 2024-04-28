@@ -4,22 +4,23 @@ import { getDocs, collection, query, where } from "firebase/firestore";
 import { firestore } from '../firebaseConfig.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import StudentData from './StudentData.js';
+import 'chart.js/auto';
 import { Chart } from 'react-chartjs-2';
 import NormalLoading from '../Components/NormalLoading.js';
 import Header from '../Components/Header.js';
 import api from '../Utilities/api.js';
+import { decrypt, encrypt } from '../Utilities/utils.js';
+import SmallLoading from '../Components/SmallLoading.js';
 
 function ClassPage() {
     const navigate = useNavigate();
     const { classId } = useParams();
     const userId = sessionStorage.getItem('user_id');
     const role = sessionStorage.getItem('role');
-    const token = sessionStorage.getItem('access_token');
     const [loading, setLoading] = useState(true)
     const [hasPreviousData, setHasPreviousData] = useState(false)
     const [hasActiveAssessment, setHasActiveAssessment] = useState(false)
-    const [questions, setQuestions] = useState([]);
-    const [selectedQuestion, setSelectedQuestion] = useState(null);
+    const [assessmentForReview, setAssessmentForReview] = useState(false)
     const [assessmentId, setAssessmentId] = useState(null);
     const [comprehensiveAnalysis, setComprehensiveAnalysis] = useState(null);
     const [competencyDiagnosis, setCompetencyDiagnosis] = useState(null);
@@ -33,6 +34,9 @@ function ClassPage() {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [selectedStudentLoading, setSelectedStudentLoading] = useState(true);
     const [hasCopied, setHasCopied] = useState(false);
+    const [ongoingAssessments, setOngoingAssessments] = useState(null);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [submitAllLoading, setSubmitAllLoading] = useState(false);
     const [scoreDistribution, setScoreDistribution] = useState({
         labels: [
             'Basic Theory',
@@ -96,8 +100,6 @@ function ClassPage() {
         }
     };
     const chartOptions = {
-        type: 'bar',
-        data: competencyDistribution,
         options: {
             scales: {
                 y: {
@@ -106,6 +108,43 @@ function ClassPage() {
             }
         }
     };
+
+    useEffect(() => {
+        const fetchOngoingAssessments = async () => {
+            try {
+                const assessments = await api.get(`/assessments/${classId}/assessments`);
+                const ongoingAssessments = [];
+                for (const assessment of assessments.data) {
+                    try {
+                        if (assessment.is_submitted === true) {
+                            const student = await api.get(`/students/${assessment.student_id}`);
+                            try {
+                                const user = await api.get(`/users/${student.data.student_id}`);
+                                ongoingAssessments.push({
+                                    ...assessment,
+                                    studentName: user.data.firstname + " " + user.data.middlename + " " + user.data.lastname,
+                                });
+                            } catch (error) {
+                                // console.error("Error fetching user data:", error);
+                            }
+                        }
+                    }
+                    catch (error) {
+                        // console.error("Error fetching student data:", error);
+                    }
+                }
+                if (ongoingAssessments.length > 0) {
+                    setOngoingAssessments(ongoingAssessments);
+                }
+            } catch (error) {
+                // console.error("Error fetching ongoing assessments:", error);
+            }
+        }
+
+        if (role === "Teacher") {
+            fetchOngoingAssessments();
+        }
+    }, []);
 
     useEffect(() => {
         const fetchClass = async () => {
@@ -124,11 +163,7 @@ function ClassPage() {
         const fetchData = async () => {
             try {
                 if (role === "Student") {
-                    await api.get(`/students/${userId}/class/${classId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    await api.get(`/students/${userId}/class/${classId}`);
                 }
                 else if (role === "Teacher") {
                     const classData = await api.get(`/classes/${classId}`)
@@ -144,52 +179,45 @@ function ClassPage() {
         }
 
         fetchData();
-    }, [userId, classId, role, token, navigate]);
+    }, [classId, navigate, role, userId]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const studentResponse = await api.get(`/students/classes/${classId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const studentResponse = await api.get(`/students/classes/${classId}`);
                 const studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
 
                 try {
-                    const assessmentResponse = await api.get(`/assessments/students/${studentId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    const assessmentResponse = await api.get(`/assessments/students/${studentId}`);
                     if (assessmentResponse.data) {
                         const response = await api.get(`/assessments/${assessmentResponse.data.assessment_id}`);
-
-                        const { datetimecreated } = response.data;
-                        const currentTime = new Date();
-                        const assessmentTime = new Date(datetimecreated);
-                        const timeDifference = Math.abs(currentTime - assessmentTime);
-
-                        const remainingMilliseconds = 2 * 60 * 60 * 1000 + 30 * 60 * 1000 - timeDifference;
-                        const remainingHours = Math.floor(remainingMilliseconds / (1000 * 60 * 60));
-                        const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
-                        const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
-                        if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
-                            await api.delete(`/assessments/${assessmentResponse.data.assessment_id}`);
+                        if (response.data.is_submitted === true) {
+                            setHasActiveAssessment(false);
+                            setAssessmentForReview(true);
                         }
                         else {
-                            setHasActiveAssessment(true);
-                            setAssessmentId(assessmentResponse.data.assessment_id);
+                            const { datetimecreated } = response.data;
+                            const currentTime = new Date();
+                            const assessmentTime = new Date(datetimecreated);
+                            const timeDifference = Math.abs(currentTime - assessmentTime);
+
+                            const remainingMilliseconds = 2 * 60 * 60 * 1000 + 30 * 60 * 1000 - timeDifference;
+                            const remainingHours = Math.floor(remainingMilliseconds / (1000 * 60 * 60));
+                            const remainingMinutes = Math.floor((remainingMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+                            const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
+                            if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
+                                setHasActiveAssessment(false);
+                            }
+                            else {
+                                setHasActiveAssessment(true);
+                                setAssessmentId(assessmentResponse.data.assessment_id);
+                            }
                         }
                     }
-                } catch (assessmentError) {
-                    if (assessmentError.response.status === 404) {
-                        setHasActiveAssessment(false);
-                    } else {
-                        throw assessmentError;
-                    }
-                }
 
+                } catch (assessmentError) {
+                    setHasActiveAssessment(false);
+                }
                 setLoading(false);
             }
             catch (error) {
@@ -200,7 +228,7 @@ function ClassPage() {
         if (role === "Student") {
             fetchData();
         }
-    }, [classId, role, token, userId]);
+    }, [classId, role, userId]);
 
     useEffect(() => {
         const fetchStudentData = async () => {
@@ -214,11 +242,7 @@ function ClassPage() {
                 const studentScores = [];
 
                 try {
-                    const studentResponse = await api.get(`/students/classes/${classId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    const studentResponse = await api.get(`/students/classes/${classId}`);
                     studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
                 }
                 catch (error) {
@@ -226,11 +250,7 @@ function ClassPage() {
                 }
 
                 try {
-                    const studentsInClass = await api.get(`/students/classes/${classId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    const studentsInClass = await api.get(`/students/classes/${classId}`);
                     studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
                 }
                 catch (error) {
@@ -238,11 +258,7 @@ function ClassPage() {
                 }
 
                 try {
-                    const assessmentResponse = await api.get(`/assessment_results/students/${studentId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    const assessmentResponse = await api.get(`/assessment_results/students/${studentId}`);
                     assessmentResponseData = assessmentResponse.data;
                 }
                 catch (error) {
@@ -250,11 +266,7 @@ function ClassPage() {
                 }
 
                 try {
-                    const getModelResults = await api.get('/model_results', {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    const getModelResults = await api.get('/model_results');
                     for (const modelResult of getModelResults.data) {
                         if (modelResult.student_id === studentId) {
                             tempModelResultsArray.push(modelResult);
@@ -277,11 +289,7 @@ function ClassPage() {
 
                 for (const studentId of studentIdsInClass) {
                     try {
-                        const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`, {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        });
+                        const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`);
                         totalClassScore += studentAssessmentResult.data.total_score;
                         studentScores.push(studentAssessmentResult.data.total_score);
                     } catch (error) {
@@ -385,11 +393,7 @@ function ClassPage() {
                 const studentAssessmentResults = [];
 
                 try {
-                    const studentsResponse = await api.get(`/students/classes/${classId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    const studentsResponse = await api.get(`/students/classes/${classId}`);
                     studentsResponse.data.forEach(student => studentsInClass.push(student));
                 }
                 catch (error) {
@@ -398,11 +402,7 @@ function ClassPage() {
 
                 for (const student of studentsInClass) {
                     try {
-                        const assessmentResponse = await api.get(`/assessment_results/students/${student.id}`, {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        });
+                        const assessmentResponse = await api.get(`/assessment_results/students/${student.id}`);
                         try {
                             const userResponse = await api.get(`/users/${student.student_id}`);
                             const studentName = userResponse.data.firstname + " " + userResponse.data.middlename + " " + userResponse.data.lastname;
@@ -446,7 +446,7 @@ function ClassPage() {
         else {
             fetchTeacherData();
         }
-    }, [classId, role, token, userId]);
+    }, [classId, role, userId]);
 
     const handleTakeAssessmentClick = () => {
         const fetchData = async () => {
@@ -460,24 +460,26 @@ function ClassPage() {
                         return {
                             id: doc.id,
                             ...doc.data(),
-                            studentAnswer: null,
-                            studentCRI: 0,
-                            isForReview: false,
+                            student_answer: null,
+                            student_cri: 0,
+                            is_for_review: false,
                             time: 0,
+                            assessment_id: null,
                         };
                     });
 
                     const shuffledDocuments = documents.sort(() => Math.random() - 0.5);
-                    return shuffledDocuments.slice(0, count).map(({ question, figure, choices, answer, tag, studentAnswer, studentCRI, isForReview, time }) => ({
+                    return shuffledDocuments.slice(0, count).map(({ question, figure, choices, answer, tag, student_answer, student_cri, is_for_review, time, assessment_id }) => ({
                         question,
                         figure,
                         choices,
                         answer,
-                        majorCategory: tag,
-                        studentAnswer,
-                        studentCRI,
-                        isForReview,
+                        major_category: tag,
+                        student_answer,
+                        student_cri,
+                        is_for_review,
                         time,
+                        assessment_id
                     }));
                 };
 
@@ -503,25 +505,10 @@ function ClassPage() {
                     ...corporate,
                 ];
 
-                setQuestions(allDocuments);
                 if (allDocuments.length > 0) {
-                    const firstQuestion = {
-                        ...allDocuments[0],
-                        itemNumber: 1,
-                        studentAnswer: null,
-                        studentCRI: 0,
-                        isForReview: false,
-                        time: 0,
-                    };
-
-                    setSelectedQuestion(firstQuestion);
 
                     try {
-                        const studentResponse = await api.get(`/students/classes/${classId}`, {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        });
+                        const studentResponse = await api.get(`/students/classes/${classId}`);
 
                         studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
                     }
@@ -531,37 +518,22 @@ function ClassPage() {
 
                     try {
                         const studentAssessmentResponse = await api.post('/assessments', {
-                            student_id: studentId
-                        }, {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
+                            student_id: studentId,
+                            is_submitted: false,
                         });
                         studentAssessmentId = studentAssessmentResponse.data.id;
-                        for (const question of allDocuments) {
-                            try {
-                                await api.post('/questions', {
-                                    question: question.question,
-                                    figure: question.figure,
-                                    choices: question.choices,
-                                    answer: question.answer,
-                                    major_category: question.majorCategory,
-                                    student_answer: question.studentAnswer,
-                                    student_cri: question.studentCRI,
-                                    is_for_review: question.isForReview,
-                                    time: question.time,
-                                    assessment_id: studentAssessmentId
-                                }, {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`
-                                    }
-                                });
-                            }
-                            catch (error) {
-                                // console.error("Error creating question:", error);
-                                continue;
-                            }
+                        for (const document of allDocuments) {
+                            document.answer = encrypt(document.answer);
+                            document.assessment_id = studentAssessmentId;
                         }
+
+                        try {
+                            await api.post('/questions', allDocuments);
+                        }
+                        catch (error) {
+                            // console.error("Error creating question:", error);
+                        }
+
                     }
                     catch (error) {
                         // console.error("Error creating assessment:", error);
@@ -584,11 +556,7 @@ function ClassPage() {
 
     const handleContinueAssessmentClick = async () => {
         try {
-            const studentResponse = await api.get(`/students/classes/${classId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            const studentResponse = await api.get(`/students/classes/${classId}`);
 
             const studentId = studentResponse.data.find(student => student.student_id === userId)?.id;
             navigate(`/assessment/${assessmentId}`, {
@@ -613,11 +581,7 @@ function ClassPage() {
             const studentScores = [];
 
             try {
-                const studentsInClass = await api.get(`/students/classes/${classId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const studentsInClass = await api.get(`/students/classes/${classId}`);
                 studentsInClass.data.forEach(student => studentIdsInClass.push(student.id));
             }
             catch (error) {
@@ -625,11 +589,7 @@ function ClassPage() {
             }
 
             try {
-                const assessmentResponse = await api.get(`/assessment_results/students/${clickedStudentId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const assessmentResponse = await api.get(`/assessment_results/students/${clickedStudentId}`);
                 assessmentResponseData = assessmentResponse.data;
             }
             catch (error) {
@@ -637,11 +597,7 @@ function ClassPage() {
             }
 
             try {
-                const getModelResults = await api.get('/model_results', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const getModelResults = await api.get('/model_results');
                 getModelResults.data.forEach((modelResult) => {
                     if (modelResult.student_id === clickedStudentId) {
                         tempModelResultsArray.push(modelResult);
@@ -664,11 +620,7 @@ function ClassPage() {
 
             for (const studentId of studentIdsInClass) {
                 try {
-                    const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
+                    const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`);
                     totalClassScore += studentAssessmentResult.data.total_score;
                     studentScores.push(studentAssessmentResult.data.total_score);
                 } catch (error) {
@@ -792,11 +744,7 @@ function ClassPage() {
             const tempAllModelResultsArray = [];
 
             try {
-                const studentsInClassResponse = await api.get(`/students/classes/${classId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const studentsInClassResponse = await api.get(`/students/classes/${classId}`);
                 studentsInClassResponse.data.forEach(student => studentIdsInClass.push(student.id));
             }
             catch (error) {
@@ -804,11 +752,7 @@ function ClassPage() {
             }
 
             try {
-                const getModelResultsResponse = await api.get('/model_results', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const getModelResultsResponse = await api.get('/model_results');
 
                 for (const studentId of studentIdsInClass) {
                     getModelResultsResponse.data.forEach((modelResult) => {
@@ -855,6 +799,188 @@ function ClassPage() {
         }
     }
 
+    const handleSubmitAssessment = async (questions, student_id, assessment_id) => {
+        try {
+            setSubmitLoading(true);
+            const total_items = questions.length;
+            let total_score = 0;
+            let basic_theory_score = 0;
+            let computer_systems_score = 0;
+            let technical_elements_score = 0;
+            let development_techniques_score = 0;
+            let project_management_score = 0;
+            let service_management_score = 0;
+            let system_strategy_score = 0;
+            let management_strategy_score = 0;
+            let corporate_legal_affairs_score = 0;
+            let teacher_id;
+            const categoryScores = {
+                "Basic Theory": basic_theory_score,
+                "Computer Systems": computer_systems_score,
+                "Technical Elements": technical_elements_score,
+                "Development Techniques": development_techniques_score,
+                "Project Management": project_management_score,
+                "Service Management": service_management_score,
+                "System Strategy": system_strategy_score,
+                "Management Strategy": management_strategy_score,
+                "Corporate & Legal Affairs": corporate_legal_affairs_score
+            };
+            const questionsData = [];
+            const categoryToInteger = {
+                "Basic Theory": 1,
+                "Computer Systems": 2,
+                "Technical Elements": 3,
+                "Development Techniques": 4,
+                "Project Management": 5,
+                "Service Management": 6,
+                "System Strategy": 7,
+                "Management Strategy": 8,
+                "Corporate & Legal Affairs": 9
+            };
+            const forPrediction = [];
+
+            for (const question of questions) {
+                try {
+                    const questionResponse = await api.get(`/questions/${question}`);
+                    const answer = decrypt(questionResponse.data.answer);
+                    if (answer === questionResponse.data.student_answer) {
+                        total_score++;
+                        const majorCategory = questionResponse.data.major_category;
+                        categoryScores[majorCategory]++;
+                    }
+                    questionsData.push(questionResponse.data);
+                } catch (error) {
+                    // console.error('Error fetching questions:', error);
+                }
+            }
+
+            try {
+                const classResponse = await api.get(`/classes/${classId}`);
+                teacher_id = classResponse.data.teacher_id;
+            } catch (error) {
+                // console.error('Error fetching teacher ID:', error);
+            }
+
+            for (const category in categoryToInteger) {
+                let major_category = categoryToInteger[category];
+                let number_of_items = 0;
+                let total_score = 0;
+                let total_time_taken = 0;
+                let total_student_cri = 0;
+
+                for (const question of questionsData) {
+                    if (question.major_category === category) {
+                        number_of_items++;
+                        total_score += question.student_answer === decrypt(question.answer) ? 1 : 0;
+                        total_time_taken += question.time;
+                        total_student_cri += question.student_cri;
+                    }
+                }
+
+                const average_cri = number_of_items === 0 ? 0 : parseFloat((total_student_cri / number_of_items).toFixed(1));
+
+                forPrediction.push({
+                    major_category,
+                    number_of_items,
+                    total_score,
+                    total_time_taken,
+                    average_cri
+                });
+            }
+
+            try {
+                await api.post('/assessment_results', {
+                    total_items,
+                    total_score,
+                    basic_theory_score: categoryScores['Basic Theory'],
+                    computer_systems_score: categoryScores['Computer Systems'],
+                    technical_elements_score: categoryScores['Technical Elements'],
+                    development_techniques_score: categoryScores['Development Techniques'],
+                    project_management_score: categoryScores['Project Management'],
+                    service_management_score: categoryScores['Service Management'],
+                    system_strategy_score: categoryScores['System Strategy'],
+                    management_strategy_score: categoryScores['Management Strategy'],
+                    corporate_legal_affairs_score: categoryScores['Corporate & Legal Affairs'],
+                    student_id,
+                    teacher_id
+                });
+            } catch (error) {
+                const assessment = await api.get(`/assessment_results/students/${student_id}`);
+                const assessmentResultId = assessment.data.id;
+                try {
+                    await api.put(`/assessment_results/${assessmentResultId}`, {
+                        total_items,
+                        total_score,
+                        basic_theory_score: categoryScores['Basic Theory'],
+                        computer_systems_score: categoryScores['Computer Systems'],
+                        technical_elements_score: categoryScores['Technical Elements'],
+                        development_techniques_score: categoryScores['Development Techniques'],
+                        project_management_score: categoryScores['Project Management'],
+                        service_management_score: categoryScores['Service Management'],
+                        system_strategy_score: categoryScores['System Strategy'],
+                        management_strategy_score: categoryScores['Management Strategy'],
+                        corporate_legal_affairs_score: categoryScores['Corporate & Legal Affairs'],
+                        student_id,
+                        teacher_id
+                    });
+                } catch (error) {
+                    // console.error('Error updating assessment result:', error);
+                }
+                // console.error('Error creating assessment result:', error);
+            }
+
+            for (const prediction of forPrediction) {
+                try {
+                    const predictionResponse = await api.post('/model_results/predict-cri-criteria', prediction);
+                    prediction.understanding_level = predictionResponse.data.understanding_level;
+                    prediction.cri_criteria = predictionResponse.data.predicted_cri_criteria;
+                    prediction.accuracy = predictionResponse.data.accuracy;
+                    prediction.student_id = student_id;
+                    prediction.teacher_id = teacher_id;
+                    try {
+                        const modelResult = await api.get(`/model_results/students/${student_id}/major-categories/${prediction.major_category}`);
+                        const modelResultId = modelResult.data.id;
+                        prediction.id = modelResultId;
+                    } catch (error) {
+                        // console.error('Error fetching model result:', error);
+                    }
+                } catch (error) {
+                    // console.error('Error predicting CRI criteria:', error);
+                }
+            }
+
+            try {
+                await api.post('/model_results/create', forPrediction);
+            } catch (error) {
+                try {
+                    await api.put('/model_results/update-multiple-model-results', forPrediction);
+                } catch (error) {
+                    // console.error('Error updating model results:', error);
+                }
+                // console.error('Error creating model results:', error);
+            }
+
+            try {
+                await api.delete(`/assessments/${assessment_id}`);
+            } catch (error) {
+                // console.error('Error deleting assessment:', error);
+            }
+
+            setSubmitLoading(false);
+        } catch (error) {
+            // console.error('Error submitting assessment:', error);
+            setSubmitLoading(false);
+        }
+    }
+
+    const handleSubmitAllAssessments = async () => {
+        setSubmitAllLoading(true);
+        for (const assessment of ongoingAssessments) {
+            await handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id);
+        }
+        navigate(0);
+    }
+
     return (
         <div className='w-100 h-100 d-flex flex-column justify-content-start align-items-center'>
             <div className="modal fade" id="generateAssessmentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -862,15 +988,17 @@ function ClassPage() {
                     <div className="modal-content">
                         <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
                             <p>Generating assessment...</p>
-                            <div className='w-100 h-100 d-flex justify-content-center align-items-center'>
-                                <div className="spinner-border" role="status"
-                                    style={{
-                                        color: colors.accent
-                                    }}
-                                >
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
+                            <NormalLoading />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="modal fade" id="calculateAllResultsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-body d-flex flex-column justify-content-center align-items-center gap-2">
+                            <p>Currently processing the results. It may take some time due to the complexity of the calculations involved. Please refrain from closing this page or refreshing it, as doing so may interrupt the processing of your assessments and delay the results further.</p>
+                            <NormalLoading />
                         </div>
                     </div>
                 </div>
@@ -926,15 +1054,27 @@ function ClassPage() {
                                     Continue Assessment
                                 </button>
                             ) : (
-                                <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target="#generateAssessmentModal" onClick={handleTakeAssessmentClick}
-                                    style={{
-                                        color: colors.dark,
-                                        backgroundColor: colors.accent,
-                                        border: "none",
-                                        width: "200px"
-                                    }}>
-                                    Take Assessment
-                                </button>
+                                assessmentForReview ? (
+                                    <button className='btn btn-primary' disabled
+                                        style={{
+                                            color: colors.dark,
+                                            backgroundColor: colors.accent,
+                                            border: "none",
+                                            width: "200px"
+                                        }}>
+                                        Being Reviewed
+                                    </button>
+                                ) : (
+                                    <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target="#generateAssessmentModal" onClick={handleTakeAssessmentClick}
+                                        style={{
+                                            color: colors.dark,
+                                            backgroundColor: colors.accent,
+                                            border: "none",
+                                            width: "200px"
+                                        }}>
+                                        Take Assessment
+                                    </button>
+                                )
                             )}
                         </div>
                     ) : (
@@ -968,15 +1108,27 @@ function ClassPage() {
                                     Continue Assessment
                                 </button>
                             ) : (
-                                <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target="#generateAssessmentModal" onClick={handleTakeAssessmentClick}
-                                    style={{
-                                        color: colors.dark,
-                                        backgroundColor: colors.accent,
-                                        border: "none",
-                                        width: "200px"
-                                    }}>
-                                    Take Assessment
-                                </button>
+                                assessmentForReview ? (
+                                    <button className='btn btn-primary' disabled
+                                        style={{
+                                            color: colors.dark,
+                                            backgroundColor: colors.accent,
+                                            border: "none",
+                                            width: "200px"
+                                        }}>
+                                        Being Reviewed
+                                    </button>
+                                ) : (
+                                    <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target="#generateAssessmentModal" onClick={handleTakeAssessmentClick}
+                                        style={{
+                                            color: colors.dark,
+                                            backgroundColor: colors.accent,
+                                            border: "none",
+                                            width: "200px"
+                                        }}>
+                                        Take Assessment
+                                    </button>
+                                )
                             )}
                         </div>
                     )
@@ -987,7 +1139,7 @@ function ClassPage() {
                                 overflowY: "auto",
                             }}
                         >
-                            <div className='w-50 h-100 d-flex flex-column justify-content-start align-items-center gap-2'>
+                            <div className='w-50 d-flex flex-column justify-content-start align-items-center gap-2'>
                                 <h3 className='mb-0'
                                     style={{
                                         fontFamily: "Montserrat",
@@ -1069,6 +1221,77 @@ function ClassPage() {
                                 </div>
                             </div>
                             {role === "Teacher" && (
+                                ongoingAssessments && (
+                                    <div className='w-50 d-flex flex-column justify-content-center align-items-center gap-2'>
+                                        <h3 className='mb-0'
+                                            style={{
+                                                fontFamily: "Montserrat",
+                                                fontWeight: "900",
+                                                color: colors.dark,
+                                            }}
+                                        >
+                                            Submitted Assessments
+                                        </h3>
+                                        <table className="table align-middle text-center">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Name</th>
+                                                    <th scope="col">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {ongoingAssessments.length > 0 && (
+                                                    <tr>
+                                                        <td></td>
+                                                        <td>
+                                                            <button className="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#calculateAllResultsModal" onClick={handleSubmitAllAssessments}
+                                                                style={{
+                                                                    width: "200px",
+                                                                    height: "40px",
+                                                                    borderRadius: "10px",
+                                                                    backgroundColor: colors.accent,
+                                                                    borderColor: colors.accent,
+                                                                    color: colors.darkest,
+                                                                }}
+                                                            >
+                                                                {submitAllLoading ? (
+                                                                    <SmallLoading />
+                                                                ) : (
+                                                                    <p>Calculate All Results</p>
+                                                                )}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {ongoingAssessments && ongoingAssessments.map((assessment, index) => (
+                                                    <tr key={index}>
+                                                        <td>{assessment.studentName}</td>
+                                                        <td>
+                                                            <button className="btn btn-primary" type="button" onClick={() => handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id)}
+                                                                style={{
+                                                                    width: "200px",
+                                                                    height: "40px",
+                                                                    borderRadius: "10px",
+                                                                    backgroundColor: colors.accent,
+                                                                    borderColor: colors.accent,
+                                                                    color: colors.darkest,
+                                                                }}
+                                                            >
+                                                                {submitLoading ? (
+                                                                    <SmallLoading />
+                                                                ) : (
+                                                                    <p>Calculate Result</p>
+                                                                )}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )
+                            )}
+                            {role === "Teacher" && (
                                 <button className='btn btn-primary' onClick={copyClassCode}
                                     style={{
                                         color: colors.dark,
@@ -1079,7 +1302,7 @@ function ClassPage() {
                                     }}>
                                     {hasCopied ? (
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill={colors.dark} className="bi bi-clipboard-check" viewBox="0 0 16 16">
-                                            <path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0" />
+                                            <path fillRule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0" />
                                             <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
                                             <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
                                         </svg>

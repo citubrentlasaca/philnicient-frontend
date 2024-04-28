@@ -80,7 +80,7 @@ function AssessmentPageLayout({ children, itemNumber, totalItems, questions, stu
             >
                 {children}
             </main>
-            <AssessmentPageFooter itemNumber={itemNumber} totalItems={totalItems} questions={questions} timeRemaining={timeRemaining} assessmentId={studentAssessmentId} classId={classId} studentId={studentId} />
+            <AssessmentPageFooter itemNumber={itemNumber} totalItems={totalItems} questions={questions} timeRemaining={timeRemaining} assessmentId={studentAssessmentId} studentId={studentId} />
         </div>
     )
 }

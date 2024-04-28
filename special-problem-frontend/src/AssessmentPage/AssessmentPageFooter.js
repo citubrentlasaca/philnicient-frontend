@@ -4,81 +4,30 @@ import { useNavigate } from 'react-router-dom'
 import SmallLoading from '../Components/SmallLoading';
 import api from '../Utilities/api';
 
-function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId, classId, studentId }) {
+function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining, assessmentId, studentId }) {
     const navigate = useNavigate()
-    const [score, setScore] = useState(0);
-    const [modelInputs, setModelInputs] = useState([])
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async () => {
         setLoading(true);
-        const categoryToNumber = {
-            'Basic Theory': 1,
-            'Computer Systems': 2,
-            'Technical Elements': 3,
-            'Development Techniques': 4,
-            'Project Management': 5,
-            'Service Management': 6,
-            'System Strategy': 7,
-            'Management Strategy': 8,
-            'Corporate & Legal Affairs': 9,
-        };
 
-        questions.forEach((question) => {
-            if (question.answer === question.studentAnswer) {
-                setScore((prevScore) => prevScore + 1);
-            }
-        });
-
-        const tagsToHandle = Object.keys(categoryToNumber);
-
-        let modelInputsData = [];
-
-        tagsToHandle.forEach((majorCategory) => {
-            const filteredQuestions = questions.filter((question) => question.majorCategory === majorCategory);
-            const numberOfItems = filteredQuestions.length;
-
-            let tagScore = 0;
-            let totalTimeTaken = 0;
-            let totalCRI = 0;
-
-            filteredQuestions.forEach((question) => {
-                if (question.answer === question.studentAnswer) {
-                    tagScore += 1;
-                }
-
-                totalTimeTaken += question.time;
-                totalCRI += question.studentCRI;
-            });
-
-            const averageCRI = numberOfItems > 0 ? totalCRI / numberOfItems : 0;
-
-            modelInputsData.push({
-                majorCategory: categoryToNumber[majorCategory],
-                numberOfItems,
-                score: tagScore,
-                totalTimeTaken,
-                averageCRI,
-            });
-        });
-
-
-        setModelInputs((prevInputs) => [...prevInputs, ...modelInputsData]);
         try {
-            await api.delete(`/assessments/${assessmentId}`);
+            await api.put('/questions/update-multiple-questions', questions);
+        } catch (error) {
+            //console.error('Error updating questions:', error);
+        }
+
+        try {
+            await api.put(`/assessments/${assessmentId}`, {
+                student_id: studentId,
+                is_submitted: true,
+            })
         }
         catch (error) {
-            // console.error("Error deleting assessment: ", error);
+            // console.error('Error updating assessment:', error);
         }
 
-        navigate(`/results`, {
-            state: {
-                modelInputsData: modelInputsData,
-                studentId: studentId,
-                totalItems: totalItems,
-                classId: classId
-            }
-        });
+        navigate(`/results`);
     };
 
     useEffect(() => {
@@ -94,6 +43,48 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
                 backgroundColor: colors.darkest,
             }}
         >
+            <div className="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div className="modal-body">
+                            Are you sure you want to submit?
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal"
+                                style={{
+                                    width: "100px",
+                                    height: "40px",
+                                    borderRadius: "10px",
+                                    backgroundColor: colors.accent,
+                                    borderColor: colors.accent,
+                                    color: colors.darkest,
+                                }}
+                            >
+                                No
+                            </button>
+                            <button type="button" className="btn btn-primary" onClick={handleSubmit}
+                                style={{
+                                    width: "100px",
+                                    height: "40px",
+                                    borderRadius: "10px",
+                                    backgroundColor: colors.accent,
+                                    borderColor: colors.accent,
+                                    color: colors.darkest,
+                                }}
+                            >
+                                {loading ? (
+                                    <SmallLoading />
+                                ) : (
+                                    <p>Yes</p>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <h5 className='mb-0'
                 style={{
                     color: colors.accent,
@@ -103,7 +94,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
             >
                 {itemNumber} out of {totalItems}
             </h5>
-            <button className="btn btn-primary" type="button" onClick={handleSubmit}
+            <button className="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#staticBackdrop"
                 style={{
                     width: "100px",
                     height: "40px",
@@ -113,11 +104,7 @@ function AssessmentPageFooter({ itemNumber, totalItems, questions, timeRemaining
                     color: colors.darkest,
                 }}
             >
-                {loading ? (
-                    <SmallLoading />
-                ) : (
-                    <p className="mb-0">Submit</p>
-                )}
+                <p className="mb-0">Submit</p>
             </button>
         </div>
     )

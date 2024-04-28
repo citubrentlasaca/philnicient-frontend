@@ -9,9 +9,7 @@ import { decrypt } from '../Utilities/utils'
 function Homepage() {
     const navigate = useNavigate();
     const userId = sessionStorage.getItem('user_id');
-    const role = sessionStorage.getItem('role');
-    const adminRole = decrypt(sessionStorage.getItem('role'), "PHILNICIENT");
-    const token = sessionStorage.getItem('access_token');
+    const [role, setRole] = useState('');
     const [loading, setLoading] = useState(true)
     const [className, setClassName] = useState('')
     const [classCode, setClassCode] = useState('')
@@ -20,6 +18,17 @@ function Homepage() {
     const [classCodeInput, setClassCodeInput] = useState('')
     const [classCodeError, setClassCodeError] = useState(false)
     const [buttonLoading, setButtonLoading] = useState(false)
+
+    useEffect(() => {
+        const role = sessionStorage.getItem('role');
+        if (role !== "Teacher" && role !== "Student") {
+            const adminRole = decrypt(role)
+            setRole(adminRole)
+        }
+        else {
+            setRole(role)
+        }
+    }, [role]);
 
     const handleClassNameChange = (e) => {
         setClassName(e.target.value)
@@ -35,10 +44,6 @@ function Homepage() {
             const response = await api.post('/classes', {
                 classname: className,
                 teacher_id: userId,
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
             });
             const classData = response.data;
             setClassCode(classData.classcode)
@@ -124,7 +129,7 @@ function Homepage() {
                     // console.error('Error fetching all students:', error);
                 }
             }
-            else if (adminRole === 'Admin') {
+            else if (role === 'Admin') {
                 try {
                     const allClasses = await api.get('/classes');
 
@@ -347,7 +352,7 @@ function Homepage() {
                     )
                 )
             }
-            {adminRole === 'Admin' && (
+            {role === 'Admin' && (
                 loading ? (
                     <NormalLoading />
                 ) : (

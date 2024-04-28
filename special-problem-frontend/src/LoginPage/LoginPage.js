@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import SmallLoading from '../Components/SmallLoading'
 import api from '../Utilities/api'
 import { encrypt } from '../Utilities/utils'
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ function LoginPage() {
             })
 
             if (loginResponse.data.role === 'Admin') {
-                const encryptedRole = encrypt(loginResponse.data.role, "PHILNICIENT");
+                const encryptedRole = encrypt(loginResponse.data.role);
                 sessionStorage.setItem('role', encryptedRole);
             }
             else {
@@ -44,6 +45,21 @@ function LoginPage() {
             sessionStorage.setItem('user_id', loginResponse.data.user_id);
             sessionStorage.setItem('access_token', loginResponse.data.access_token);
 
+            if (loginResponse.data.role === 'Admin') {
+                try {
+                    const admin = await api.get(`/users/${loginResponse.data.user_id}`);
+                    const email = admin.data.email;
+                    const auth = getAuth();
+                    signInWithEmailAndPassword(auth, email, password)
+                        .then(() => {
+                        })
+                        .catch((error) => {
+                            //console.error(error.message);
+                        });
+                } catch (error) {
+                    console.error(error.message);
+                }
+            }
             navigate('/home');
         }
         catch (error) {
