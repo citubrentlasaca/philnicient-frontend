@@ -974,9 +974,22 @@ function ClassPage() {
     }
 
     const handleSubmitAllAssessments = async () => {
+        // setSubmitAllLoading(true);
+        // for (const assessment of ongoingAssessments) {
+        //     handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id);
+        // }
         setSubmitAllLoading(true);
-        for (const assessment of ongoingAssessments) {
-            handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id);
+        try {
+            const assessmentPromises = ongoingAssessments.map(assessment =>
+                handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id)
+            );
+
+            await Promise.all(assessmentPromises);
+
+            navigate(0);
+
+        } catch (error) {
+            console.error('Error submitting assessments:', error);
         }
     }
 
