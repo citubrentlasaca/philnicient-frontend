@@ -1162,7 +1162,7 @@ function ClassPage() {
                                 overflowY: "auto",
                             }}
                         >
-                            <div className='w-50 d-flex flex-column justify-content-start align-items-center gap-2'>
+                            <div className='w-50 h-100 d-flex flex-column justify-content-start align-items-center gap-2'>
                                 <h3 className='mb-0'
                                     style={{
                                         fontFamily: "Montserrat",
@@ -1244,24 +1244,24 @@ function ClassPage() {
                                 </div>
                             </div>
                             {role === "Teacher" && (
-                                ongoingAssessments && (
-                                    <div className='w-50 d-flex flex-column justify-content-center align-items-center gap-2'>
-                                        <h3 className='mb-0'
-                                            style={{
-                                                fontFamily: "Montserrat",
-                                                fontWeight: "900",
-                                                color: colors.dark,
-                                            }}
-                                        >
-                                            Submitted Assessments
-                                        </h3>
-                                        <table className="table align-middle text-center">
-                                            <thead>
-                                                <tr>
-                                                    <th scope="col">Name</th>
-                                                    <th scope="col">Action</th>
-                                                </tr>
-                                            </thead>
+                                <div className='w-50 d-flex flex-column justify-content-center align-items-center gap-2'>
+                                    <h3 className='mb-0'
+                                        style={{
+                                            fontFamily: "Montserrat",
+                                            fontWeight: "900",
+                                            color: colors.dark,
+                                        }}
+                                    >
+                                        Submitted Assessments
+                                    </h3>
+                                    <table className="table align-middle text-center">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Name</th>
+                                                <th scope="col">Action</th>
+                                            </tr>
+                                        </thead>
+                                        {ongoingAssessments && (
                                             <tbody>
                                                 {ongoingAssessments.length > 0 && (
                                                     <tr>
@@ -1310,9 +1310,9 @@ function ClassPage() {
                                                     </tr>
                                                 ))}
                                             </tbody>
-                                        </table>
-                                    </div>
-                                )
+                                        )}
+                                    </table>
+                                </div>
                             )}
                             {role === "Teacher" && (
                                 <button className='btn btn-primary' onClick={copyClassCode}
