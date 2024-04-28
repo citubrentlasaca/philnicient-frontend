@@ -825,7 +825,6 @@ function ClassPage() {
                 "Management Strategy": management_strategy_score,
                 "Corporate & Legal Affairs": corporate_legal_affairs_score
             };
-            const questionsData = [];
             const categoryToInteger = {
                 "Basic Theory": 1,
                 "Computer Systems": 2,
@@ -839,18 +838,34 @@ function ClassPage() {
             };
             const forPrediction = [];
 
-            for (const question of questions) {
-                try {
-                    const questionResponse = await api.get(`/questions/${question}`);
-                    const answer = decrypt(questionResponse.data.answer);
-                    if (answer === questionResponse.data.student_answer) {
-                        total_score++;
-                        const majorCategory = questionResponse.data.major_category;
-                        categoryScores[majorCategory]++;
-                    }
-                    questionsData.push(questionResponse.data);
-                } catch (error) {
-                    // console.error('Error fetching questions:', error);
+            // for (const question of questions) {
+            //     try {
+            //         const questionResponse = await api.get(`/questions/${question}`);
+            //         const answer = decrypt(questionResponse.data.answer);
+            //         if (answer === questionResponse.data.student_answer) {
+            //             total_score++;
+            //             const majorCategory = questionResponse.data.major_category;
+            //             categoryScores[majorCategory]++;
+            //         }
+            //         questionsData.push(questionResponse.data);
+            //     } catch (error) {
+            //         // console.error('Error fetching questions:', error);
+            //     }
+            // }
+
+            let questionsData = []
+            try {
+                const questions = await api.get(`/questions/assessment/${assessment_id}`);
+                questionsData = questions.data;
+            } catch (error) {
+                // console.error('Error fetching questions:', error);
+            }
+
+            for (const question of questionsData) {
+                if (question.student_answer === decrypt(question.answer)) {
+                    total_score++;
+                    const majorCategory = question.major_category;
+                    categoryScores[majorCategory]++;
                 }
             }
 
@@ -974,10 +989,6 @@ function ClassPage() {
     }
 
     const handleSubmitAllAssessments = async () => {
-        // setSubmitAllLoading(true);
-        // for (const assessment of ongoingAssessments) {
-        //     handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id);
-        // }
         setSubmitAllLoading(true);
         try {
             const assessmentPromises = ongoingAssessments.map(assessment =>
