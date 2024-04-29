@@ -207,6 +207,14 @@ function ClassPage() {
                             const remainingSeconds = Math.floor((remainingMilliseconds % (1000 * 60)) / 1000);
                             if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
                                 setHasActiveAssessment(false);
+                                try {
+                                    await api.put(`/assessments/${response.data.id}`, {
+                                        student_id: response.data.student_id,
+                                        is_submitted: true,
+                                    })
+                                } catch (error) {
+                                    // console.error('Error updating assessment:', error);
+                                }
                             }
                             else {
                                 setHasActiveAssessment(true);
