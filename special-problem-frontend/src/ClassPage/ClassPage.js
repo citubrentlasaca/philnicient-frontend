@@ -297,16 +297,17 @@ function ClassPage() {
                 tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
                 tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
 
-                for (const studentId of studentIdsInClass) {
-                    try {
-                        const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`);
-                        totalClassScore += studentAssessmentResult.data.total_score;
-                        studentScores.push(studentAssessmentResult.data.total_score);
-                    } catch (error) {
-                        // console.error("Error fetching assessment result for student ID:", studentId, error);
-                        continue;
+                try {
+                    const classAssessmentResults = await api.get(`/assessment_results/class/${classId}`);
+                    for (const assessmentResult of classAssessmentResults.data) {
+                        totalClassScore += assessmentResult.total_score;
+                        studentScores.push(assessmentResult.total_score);
                     }
+                } catch (error) {
+                    // console.error("Error fetching assessment results for class:", error);
                 }
+
+
 
                 studentScores.sort((a, b) => b - a);
                 const assessmentData = assessmentResponseData;
@@ -410,29 +411,23 @@ function ClassPage() {
                     // console.error("Error fetching students in class:", error);
                 }
 
-                for (const student of studentsInClass) {
-                    try {
-                        const assessmentResponse = await api.get(`/assessment_results/students/${student.id}`);
+                try {
+                    const classAssessmentResults = await api.get(`/assessment_results/class/${classId}`);
+                    for (const assessmentResult of classAssessmentResults.data) {
                         try {
-                            const userResponse = await api.get(`/users/${student.student_id}`);
-                            const studentName = userResponse.data.firstname + " " + userResponse.data.middlename + " " + userResponse.data.lastname;
-                            studentAssessmentResults.push(
-                                {
-                                    studentName: studentName,
-                                    studentId: student.id,
-                                    totalScore: assessmentResponse.data.total_score,
-                                }
-                            );
-                        }
-                        catch (error) {
-                            // console.error("Error fetching user data for student ID:", student.student_id, error);
-                            continue;
+                            const student = await api.get(`/students/${assessmentResult.student_id}`);
+                            const user = await api.get(`/users/${student.data.student_id}`);
+                            studentAssessmentResults.push({
+                                studentName: user.data.firstname + " " + user.data.middlename + " " + user.data.lastname,
+                                studentId: assessmentResult.student_id,
+                                totalScore: assessmentResult.total_score,
+                            });
+                        } catch (error) {
+                            // console.error("Error fetching student data:", error);
                         }
                     }
-                    catch (error) {
-                        // console.error("Error fetching assessment result for student ID:", student, error);
-                        continue;
-                    }
+                } catch (error) {
+                    // console.error("Error fetching assessment results for class:", error);
                 }
                 studentAssessmentResults.sort((a, b) => b.totalScore - a.totalScore);
 
@@ -628,15 +623,14 @@ function ClassPage() {
             tempModelResultsArray.sort((a, b) => a.major_category - b.major_category);
             tempAllModelResultsArray.sort((a, b) => a.major_category - b.major_category);
 
-            for (const studentId of studentIdsInClass) {
-                try {
-                    const studentAssessmentResult = await api.get(`/assessment_results/students/${studentId}`);
-                    totalClassScore += studentAssessmentResult.data.total_score;
-                    studentScores.push(studentAssessmentResult.data.total_score);
-                } catch (error) {
-                    // console.error("Error fetching assessment result for student ID:", studentId, error);
-                    continue;
+            try {
+                const classAssessmentResults = await api.get(`/assessment_results/class/${classId}`);
+                for (const assessmentResult of classAssessmentResults.data) {
+                    totalClassScore += assessmentResult.total_score;
+                    studentScores.push(assessmentResult.total_score);
                 }
+            } catch (error) {
+                // console.error("Error fetching assessment results for class:", error);
             }
             studentScores.sort((a, b) => b - a);
             const assessmentData = assessmentResponseData;
