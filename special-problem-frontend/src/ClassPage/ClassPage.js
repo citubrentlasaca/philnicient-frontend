@@ -11,6 +11,7 @@ import Header from '../Components/Header.js';
 import api from '../Utilities/api.js';
 import { decrypt, encrypt } from '../Utilities/utils.js';
 import SmallLoading from '../Components/SmallLoading.js';
+import { set } from 'firebase/database';
 
 function ClassPage() {
     const navigate = useNavigate();
@@ -36,6 +37,7 @@ function ClassPage() {
     const [hasCopied, setHasCopied] = useState(false);
     const [ongoingAssessments, setOngoingAssessments] = useState(null);
     const [submitLoading, setSubmitLoading] = useState(false);
+    const [submitLoadingIndex, setSubmitLoadingIndex] = useState(null);
     const [submitAllLoading, setSubmitAllLoading] = useState(false);
     const [scoreDistribution, setScoreDistribution] = useState({
         labels: [
@@ -807,9 +809,11 @@ function ClassPage() {
         }
     }
 
-    const handleSubmitAssessment = async (questions, student_id, assessment_id) => {
+    const handleSubmitAssessment = async (questions, student_id, assessment_id, index) => {
         try {
             setSubmitLoading(true);
+            setSubmitLoadingIndex(index);
+
             const total_items = questions.length;
             let total_score = 0;
             let basic_theory_score = 0;
@@ -845,21 +849,6 @@ function ClassPage() {
                 "Corporate & Legal Affairs": 9
             };
             const forPrediction = [];
-
-            // for (const question of questions) {
-            //     try {
-            //         const questionResponse = await api.get(`/questions/${question}`);
-            //         const answer = decrypt(questionResponse.data.answer);
-            //         if (answer === questionResponse.data.student_answer) {
-            //             total_score++;
-            //             const majorCategory = questionResponse.data.major_category;
-            //             categoryScores[majorCategory]++;
-            //         }
-            //         questionsData.push(questionResponse.data);
-            //     } catch (error) {
-            //         // console.error('Error fetching questions:', error);
-            //     }
-            // }
 
             let questionsData = []
             try {
@@ -989,8 +978,8 @@ function ClassPage() {
                 // console.error('Error deleting assessment:', error);
             }
 
-            navigate(0);
             setSubmitLoading(false);
+            navigate(0);
         } catch (error) {
             // console.error('Error submitting assessment:', error);
             setSubmitLoading(false);
@@ -1488,7 +1477,7 @@ function ClassPage() {
                                                     <tr key={index}>
                                                         <td>{assessment.studentName}</td>
                                                         <td>
-                                                            <button className="btn btn-primary" type="button" onClick={() => handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id)}
+                                                            <button className="btn btn-primary" type="button" onClick={() => handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id, index)}
                                                                 style={{
                                                                     width: "200px",
                                                                     height: "40px",
@@ -1498,7 +1487,7 @@ function ClassPage() {
                                                                     color: colors.darkest,
                                                                 }}
                                                             >
-                                                                {submitLoading ? (
+                                                                {submitLoading && submitLoadingIndex === index ? (
                                                                     <SmallLoading />
                                                                 ) : (
                                                                     <p>Calculate Result</p>
