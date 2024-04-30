@@ -989,6 +989,196 @@ function ClassPage() {
                 // console.error('Error deleting assessment:', error);
             }
 
+            navigate(0);
+            setSubmitLoading(false);
+        } catch (error) {
+            // console.error('Error submitting assessment:', error);
+            setSubmitLoading(false);
+        }
+    }
+
+    const handleSubmitAssessmentForAll = async (questions, student_id, assessment_id) => {
+        try {
+            setSubmitLoading(true);
+            const total_items = questions.length;
+            let total_score = 0;
+            let basic_theory_score = 0;
+            let computer_systems_score = 0;
+            let technical_elements_score = 0;
+            let development_techniques_score = 0;
+            let project_management_score = 0;
+            let service_management_score = 0;
+            let system_strategy_score = 0;
+            let management_strategy_score = 0;
+            let corporate_legal_affairs_score = 0;
+            let teacher_id;
+            const categoryScores = {
+                "Basic Theory": basic_theory_score,
+                "Computer Systems": computer_systems_score,
+                "Technical Elements": technical_elements_score,
+                "Development Techniques": development_techniques_score,
+                "Project Management": project_management_score,
+                "Service Management": service_management_score,
+                "System Strategy": system_strategy_score,
+                "Management Strategy": management_strategy_score,
+                "Corporate & Legal Affairs": corporate_legal_affairs_score
+            };
+            const categoryToInteger = {
+                "Basic Theory": 1,
+                "Computer Systems": 2,
+                "Technical Elements": 3,
+                "Development Techniques": 4,
+                "Project Management": 5,
+                "Service Management": 6,
+                "System Strategy": 7,
+                "Management Strategy": 8,
+                "Corporate & Legal Affairs": 9
+            };
+            const forPrediction = [];
+
+            // for (const question of questions) {
+            //     try {
+            //         const questionResponse = await api.get(`/questions/${question}`);
+            //         const answer = decrypt(questionResponse.data.answer);
+            //         if (answer === questionResponse.data.student_answer) {
+            //             total_score++;
+            //             const majorCategory = questionResponse.data.major_category;
+            //             categoryScores[majorCategory]++;
+            //         }
+            //         questionsData.push(questionResponse.data);
+            //     } catch (error) {
+            //         // console.error('Error fetching questions:', error);
+            //     }
+            // }
+
+            let questionsData = []
+            try {
+                const questions = await api.get(`/questions/assessment/${assessment_id}`);
+                questionsData = questions.data;
+            } catch (error) {
+                // console.error('Error fetching questions:', error);
+            }
+
+            for (const question of questionsData) {
+                if (question.student_answer === decrypt(question.answer)) {
+                    total_score++;
+                    const majorCategory = question.major_category;
+                    categoryScores[majorCategory]++;
+                }
+            }
+
+            try {
+                const classResponse = await api.get(`/classes/${classId}`);
+                teacher_id = classResponse.data.teacher_id;
+            } catch (error) {
+                // console.error('Error fetching teacher ID:', error);
+            }
+
+            for (const category in categoryToInteger) {
+                let major_category = categoryToInteger[category];
+                let number_of_items = 0;
+                let total_score = 0;
+                let total_time_taken = 0;
+                let total_student_cri = 0;
+
+                for (const question of questionsData) {
+                    if (question.major_category === category) {
+                        number_of_items++;
+                        total_score += question.student_answer === decrypt(question.answer) ? 1 : 0;
+                        total_time_taken += question.time;
+                        total_student_cri += question.student_cri;
+                    }
+                }
+
+                const average_cri = number_of_items === 0 ? 0 : parseFloat((total_student_cri / number_of_items).toFixed(1));
+
+                forPrediction.push({
+                    major_category,
+                    number_of_items,
+                    total_score,
+                    total_time_taken,
+                    average_cri
+                });
+            }
+
+            try {
+                await api.post('/assessment_results', {
+                    total_items,
+                    total_score,
+                    basic_theory_score: categoryScores['Basic Theory'],
+                    computer_systems_score: categoryScores['Computer Systems'],
+                    technical_elements_score: categoryScores['Technical Elements'],
+                    development_techniques_score: categoryScores['Development Techniques'],
+                    project_management_score: categoryScores['Project Management'],
+                    service_management_score: categoryScores['Service Management'],
+                    system_strategy_score: categoryScores['System Strategy'],
+                    management_strategy_score: categoryScores['Management Strategy'],
+                    corporate_legal_affairs_score: categoryScores['Corporate & Legal Affairs'],
+                    student_id,
+                    teacher_id
+                });
+            } catch (error) {
+                const assessment = await api.get(`/assessment_results/students/${student_id}`);
+                const assessmentResultId = assessment.data.id;
+                try {
+                    await api.put(`/assessment_results/${assessmentResultId}`, {
+                        total_items,
+                        total_score,
+                        basic_theory_score: categoryScores['Basic Theory'],
+                        computer_systems_score: categoryScores['Computer Systems'],
+                        technical_elements_score: categoryScores['Technical Elements'],
+                        development_techniques_score: categoryScores['Development Techniques'],
+                        project_management_score: categoryScores['Project Management'],
+                        service_management_score: categoryScores['Service Management'],
+                        system_strategy_score: categoryScores['System Strategy'],
+                        management_strategy_score: categoryScores['Management Strategy'],
+                        corporate_legal_affairs_score: categoryScores['Corporate & Legal Affairs'],
+                        student_id,
+                        teacher_id
+                    });
+                } catch (error) {
+                    // console.error('Error updating assessment result:', error);
+                }
+                // console.error('Error creating assessment result:', error);
+            }
+
+            for (const prediction of forPrediction) {
+                try {
+                    const predictionResponse = await api.post('/model_results/predict-cri-criteria', prediction);
+                    prediction.understanding_level = predictionResponse.data.understanding_level;
+                    prediction.cri_criteria = predictionResponse.data.predicted_cri_criteria;
+                    prediction.accuracy = predictionResponse.data.accuracy;
+                    prediction.student_id = student_id;
+                    prediction.teacher_id = teacher_id;
+                    try {
+                        const modelResult = await api.get(`/model_results/students/${student_id}/major-categories/${prediction.major_category}`);
+                        const modelResultId = modelResult.data.id;
+                        prediction.id = modelResultId;
+                    } catch (error) {
+                        // console.error('Error fetching model result:', error);
+                    }
+                } catch (error) {
+                    // console.error('Error predicting CRI criteria:', error);
+                }
+            }
+
+            try {
+                await api.post('/model_results/create', forPrediction);
+            } catch (error) {
+                try {
+                    await api.put('/model_results/update-multiple-model-results', forPrediction);
+                } catch (error) {
+                    // console.error('Error updating model results:', error);
+                }
+                // console.error('Error creating model results:', error);
+            }
+
+            try {
+                await api.delete(`/assessments/${assessment_id}`);
+            } catch (error) {
+                // console.error('Error deleting assessment:', error);
+            }
+
             setSubmitLoading(false);
         } catch (error) {
             // console.error('Error submitting assessment:', error);
@@ -1000,7 +1190,7 @@ function ClassPage() {
         setSubmitAllLoading(true);
         try {
             const assessmentPromises = ongoingAssessments.map(assessment =>
-                handleSubmitAssessment(assessment.questions, assessment.student_id, assessment.id)
+                handleSubmitAssessmentForAll(assessment.questions, assessment.student_id, assessment.id)
             );
 
             await Promise.all(assessmentPromises);
